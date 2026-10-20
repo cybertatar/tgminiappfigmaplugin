@@ -14,6 +14,7 @@ import {
   type HeaderState,
 } from '../../components/header';
 import { PLATFORMS, type Platform, type SystemColorKey, type ThemeParamKey } from '../../core';
+import { ensureStatusBar } from './status-bar';
 import {
   boundPaint,
   ensureBooleanProperty,
@@ -79,7 +80,7 @@ function paints(ctx: BuildContext, platform: Platform, color: HeaderColor): Pain
   };
 }
 
-function slot(c: ComponentNode, name: string, spec: (typeof HEADER)[Platform], align: 'MIN' | 'MAX'): FrameNode {
+function slot(c: FrameNode, name: string, spec: (typeof HEADER)[Platform], align: 'MIN' | 'MAX'): FrameNode {
   const f = ensureChild(c, name, 'FRAME', () => figma.createFrame());
   f.fills = [];
   f.layoutMode = 'HORIZONTAL';
@@ -105,18 +106,35 @@ function buildHeader(
   const fonts = ctx.fonts[platform];
   const p = paints(ctx, platform, color);
 
-  c.layoutMode = 'HORIZONTAL';
-  c.counterAxisAlignItems = 'CENTER';
-  c.primaryAxisSizingMode = 'FIXED';
+  // Component: status bar (system area, painted with the header color) above the header row.
+  c.layoutMode = 'VERTICAL';
+  c.resize(spec.width, c.height);
+  c.primaryAxisSizingMode = 'AUTO';
   c.counterAxisSizingMode = 'FIXED';
-  c.resize(spec.width, spec.height);
-  c.paddingLeft = c.paddingRight = spec.paddingX;
-  c.itemSpacing = spec.gap;
+  c.paddingLeft = c.paddingRight = c.paddingTop = c.paddingBottom = 0;
+  c.itemSpacing = 0;
   c.fills = [p.bg];
   c.description = NOTE;
+  for (const child of [...c.children]) if (child.name !== 'Status bar' && child.name !== 'Bar') child.remove();
+
+  const status = ensureStatusBar(c, ctx, platform, p.title, spec.width);
+  if (status) status.layoutSizingHorizontal = 'FILL';
+
+  const bar = ensureChild(c, 'Bar', 'FRAME', () => figma.createFrame());
+  bar.layoutMode = 'HORIZONTAL';
+  bar.counterAxisAlignItems = 'CENTER';
+  bar.resize(spec.width, spec.height);
+  bar.primaryAxisSizingMode = 'FIXED';
+  bar.counterAxisSizingMode = 'FIXED';
+  bar.layoutSizingHorizontal = 'FILL';
+  bar.paddingLeft = bar.paddingRight = spec.paddingX;
+  bar.itemSpacing = spec.gap;
+  bar.fills = [];
+  if (status) c.insertChild(0, status);
+  c.insertChild(status ? 1 : 0, bar);
 
   // Left: iOS text button, others icon button.
-  const l = slot(c, 'Left', spec, 'MIN');
+  const l = slot(bar, 'Left', spec, 'MIN');
   l.opacity = state === 'Left pressed' ? PRESSED_OPACITY : 1;
   if (spec.leftStyle === 'text') {
     if (left === 'Back') ensureIcon(l, 'Chevron', 'chevron-left', spec.leftTextSize + 3, p.buttons);
@@ -136,7 +154,7 @@ function buildHeader(
   }
 
   // Title + subtitle.
-  const title = ensureChild(c, 'Title', 'FRAME', () => figma.createFrame());
+  const title = ensureChild(bar, 'Title', 'FRAME', () => figma.createFrame());
   title.fills = [];
   title.layoutMode = 'VERTICAL';
   title.counterAxisAlignItems = spec.titleAlign === 'CENTER' ? 'CENTER' : 'MIN';
@@ -161,14 +179,14 @@ function buildHeader(
   }
 
   // Right: menu.
-  const r = slot(c, 'Right', spec, 'MAX');
+  const r = slot(bar, 'Right', spec, 'MAX');
   r.opacity = state === 'Menu pressed' ? PRESSED_OPACITY : 1;
   ensureIcon(r, 'Menu', spec.menuIcon, spec.iconSize, p.buttons);
 
   // Keep slot order Left, Title, Right.
-  c.insertChild(0, l);
-  c.insertChild(1, title);
-  c.insertChild(2, r);
+  bar.insertChild(0, l);
+  bar.insertChild(1, title);
+  bar.insertChild(2, r);
 }
 
 export async function buildHeaderComponents(page: PageNode, ctx: BuildContext): Promise<SetReport> {
@@ -194,8 +212,12 @@ export async function buildHeaderComponents(page: PageNode, ctx: BuildContext): 
   const titleKey = ensureTextProperty(set, 'Title', 'Mini App');
   const subtitleKey = ensureTextProperty(set, 'Subtitle', 'bot');
   const showKey = ensureBooleanProperty(set, 'Show subtitle', true);
+  const statusKey = ensureBooleanProperty(set, 'Status bar', true);
   for (const c of set.children as ComponentNode[]) {
-    const block = c.findChild((n) => n.name === 'Title') as FrameNode | null;
+    const status = c.findChild((n) => n.name === 'Status bar');
+    if (status) status.componentPropertyReferences = { visible: statusKey };
+    const bar = c.findChild((n) => n.name === 'Bar') as FrameNode | null;
+    const block = bar?.findChild((n) => n.name === 'Title') as FrameNode | null;
     const t = block?.findChild((n) => n.name === 'Title') as TextNode | null;
     const s = block?.findChild((n) => n.name === 'Subtitle') as TextNode | null;
     if (t) t.componentPropertyReferences = { characters: titleKey };

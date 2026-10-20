@@ -27,3 +27,21 @@ describe('pickFont', () => {
     expect(pickFont(PLATFORM_FONTS.android.semibold, available)).toBeNull();
   });
 });
+
+describe('device insets', () => {
+  it('every component takes platform insets from DEVICE, not from iOS', async () => {
+    const { DEVICE } = await import('../src/components/device');
+    const { FULLSCREEN } = await import('../src/components/fullscreen');
+    const { HEADER } = await import('../src/components/header');
+    for (const p of PLATFORMS) {
+      expect(BOTTOM_BAR[p].width).toBe(DEVICE[p].width);
+      expect(BOTTOM_BAR[p].safeAreaBottom).toBe(DEVICE[p].safeBottom);
+      expect(HEADER[p].width).toBe(DEVICE[p].width);
+      const fs = FULLSCREEN[p];
+      if (fs) expect([fs.width, fs.screenHeight, fs.safeTop, fs.safeBottom]).toEqual([
+        DEVICE[p].width, DEVICE[p].height, DEVICE[p].safeTop, DEVICE[p].safeBottom,
+      ]);
+    }
+    expect(DEVICE.android.safeTop).not.toBe(DEVICE.ios.safeTop);
+  });
+});

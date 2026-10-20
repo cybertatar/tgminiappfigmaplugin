@@ -11,6 +11,7 @@ import {
   type ButtonState,
   type ButtonType,
 } from '../../components/bottom-bar';
+import { DEVICE } from '../../components/device';
 import { PLATFORMS, type Platform } from '../../core';
 import {
   boundPaint,
@@ -154,19 +155,22 @@ async function buildBar(
     if (node) row.insertChild(i, node);
   });
 
-  if (spec.safeAreaBottom) {
+  // System inset below the buttons. On Android it is the navigation bar, which Telegram paints
+  // with the bottom bar color (setBottomBarColor docs), so it lives inside this component.
+  const handle = DEVICE[platform].handle;
+  if (spec.safeAreaBottom && handle) {
     const area = ensureChild(c, 'Home Indicator', 'FRAME', () => figma.createFrame());
     area.fills = [];
     area.layoutMode = 'HORIZONTAL';
     area.primaryAxisAlignItems = 'CENTER';
     area.counterAxisAlignItems = 'MAX';
-    area.paddingBottom = 8;
+    area.paddingBottom = handle.bottomOffset;
     area.resize(spec.width, spec.safeAreaBottom);
     area.layoutSizingHorizontal = 'FILL';
     area.layoutSizingVertical = 'FIXED';
     const pill = ensureChild(area, 'Indicator', 'RECTANGLE', () => figma.createRectangle());
-    pill.resize(134, 5);
-    pill.cornerRadius = 2.5;
+    pill.resize(handle.width, handle.height);
+    pill.cornerRadius = handle.height / 2;
     pill.fills = [boundPaint(ctx, 'text_color')];
   } else removeChild(c, 'Home Indicator');
 }

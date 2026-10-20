@@ -5,6 +5,7 @@
 // Android, Desktop: DRAFT approximations, not yet checked against clients.
 // Update the numbers here — the plugin rebuilds components in place.
 import type { Platform } from '../core';
+import { DEVICE } from './device';
 
 export interface BottomBarSpec {
   /** Bar width = typical Mini App viewport width on the platform. */
@@ -17,7 +18,7 @@ export interface BottomBarSpec {
   fontSize: number;
   textCase: 'ORIGINAL' | 'UPPER';
   spinnerSize: number;
-  /** System safe area below the bar (iOS home indicator). 0 = none. */
+  /** System inset below the bar (iOS home indicator, Android navigation bar). 0 = none. */
   safeAreaBottom: number;
   /** Hairline between content and the bar. */
   topSeparator: boolean;
@@ -25,7 +26,7 @@ export interface BottomBarSpec {
 
 export const BOTTOM_BAR: Record<Platform, BottomBarSpec> = {
   ios: {
-    width: 402,
+    width: DEVICE.ios.width,
     padding: { top: 16, right: 16, bottom: 8, left: 16 },
     gap: 10,
     buttonHeight: 50,
@@ -33,11 +34,11 @@ export const BOTTOM_BAR: Record<Platform, BottomBarSpec> = {
     fontSize: 17,
     textCase: 'ORIGINAL',
     spinnerSize: 22,
-    safeAreaBottom: 34,
+    safeAreaBottom: DEVICE.ios.safeBottom,
     topSeparator: true,
   },
   android: {
-    width: 412,
+    width: DEVICE.android.width,
     padding: { top: 8, right: 12, bottom: 8, left: 12 },
     gap: 8,
     buttonHeight: 48,
@@ -45,11 +46,11 @@ export const BOTTOM_BAR: Record<Platform, BottomBarSpec> = {
     fontSize: 15,
     textCase: 'ORIGINAL',
     spinnerSize: 20,
-    safeAreaBottom: 0,
+    safeAreaBottom: DEVICE.android.safeBottom,
     topSeparator: false,
   },
   desktop: {
-    width: 400,
+    width: DEVICE.desktop.width,
     padding: { top: 10, right: 12, bottom: 10, left: 12 },
     gap: 8,
     buttonHeight: 42,
@@ -57,7 +58,7 @@ export const BOTTOM_BAR: Record<Platform, BottomBarSpec> = {
     fontSize: 14,
     textCase: 'ORIGINAL',
     spinnerSize: 18,
-    safeAreaBottom: 0,
+    safeAreaBottom: DEVICE.desktop.safeBottom,
     topSeparator: false,
   },
 };

@@ -3,6 +3,7 @@
 //   56pt tall, 16pt side insets, text "Cancel" left, title + "bot" centered, ⋯ in a ~22pt circle right.
 // Android, Desktop: DRAFT approximations (Material-style icon buttons, left-aligned title).
 import type { Platform, ThemeParamKey } from '../core';
+import { DEVICE } from './device';
 
 export interface HeaderSpec {
   width: number;
@@ -26,7 +27,7 @@ export interface HeaderSpec {
 
 export const HEADER: Record<Platform, HeaderSpec> = {
   ios: {
-    width: 402,
+    width: DEVICE.ios.width,
     height: 56,
     paddingX: 16,
     gap: 8,
@@ -41,7 +42,7 @@ export const HEADER: Record<Platform, HeaderSpec> = {
     fg: { title: 'text_color', subtitle: 'accent_text_color', buttons: 'accent_text_color' },
   },
   android: {
-    width: 412,
+    width: DEVICE.android.width,
     height: 56,
     paddingX: 16,
     gap: 32,
@@ -56,7 +57,7 @@ export const HEADER: Record<Platform, HeaderSpec> = {
     fg: { title: 'text_color', subtitle: 'hint_color', buttons: 'text_color' },
   },
   desktop: {
-    width: 400,
+    width: DEVICE.desktop.width,
     height: 48,
     paddingX: 12,
     gap: 16,

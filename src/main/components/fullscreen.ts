@@ -14,6 +14,7 @@ import {
 } from '../../components/fullscreen';
 import { PRESSED_OPACITY } from '../../components/header';
 import type { Platform } from '../../core';
+import { ensureStatusBar } from './status-bar';
 import {
   ensureBooleanProperty,
   ensureChild,
@@ -174,8 +175,14 @@ function buildFullscreen(c: ComponentNode, ctx: BuildContext, platform: Platform
   c.clipsContent = false;
   c.description = NOTE;
   const guide = buildGuide(c, ctx, platform, spec);
+  const status = ensureStatusBar(c, ctx, platform, systemPaint(ctx, 'status_bar_fg'), spec.width);
+  if (status) {
+    status.x = status.y = 0;
+    status.constraints = { horizontal: 'STRETCH', vertical: 'MIN' };
+  }
   buildControls(c, ctx, platform, left, state);
-  c.insertChild(0, guide); // guide under the controls
+  c.insertChild(0, guide); // guide under everything
+  if (status) c.insertChild(1, status);
 }
 
 export async function buildFullscreenComponents(page: PageNode, ctx: BuildContext): Promise<SetReport> {
@@ -191,9 +198,12 @@ export async function buildFullscreenComponents(page: PageNode, ctx: BuildContex
   set.description = NOTE;
   removeProperty(set, 'App name');
   const guideKey = ensureBooleanProperty(set, 'Safe area guide', false);
+  const statusKey = ensureBooleanProperty(set, 'Status bar', true);
   for (const c of set.children as ComponentNode[]) {
     const guide = c.findChild((n) => n.name === 'Safe area guide');
     if (guide) guide.componentPropertyReferences = { visible: guideKey };
+    const status = c.findChild((n) => n.name === 'Status bar');
+    if (status) status.componentPropertyReferences = { visible: statusKey };
   }
 
   findSet(page, TAG_SAFE_AREA_OLD)?.remove();

@@ -4,6 +4,7 @@
 //   safe area (62pt). Pill colors follow the theme scheme (system/fullscreen_control_* variables).
 // Android: DRAFT by analogy. Desktop has no fullscreen controls.
 import type { Platform } from '../core';
+import { DEVICE } from './device';
 
 export interface PillSpec {
   height: number;
@@ -13,11 +14,10 @@ export interface PillSpec {
 }
 
 export interface FullscreenSpec {
+  /** Screen size and system insets come from DEVICE. */
   width: number;
   screenHeight: number;
-  /** Status bar / notch: safeAreaInset.top. */
   safeTop: number;
-  /** Home indicator / navigation: safeAreaInset.bottom. */
   safeBottom: number;
   /** contentSafeAreaInset.top: the band the controls occupy below the safe area. */
   controlsRow: number;
@@ -26,12 +26,14 @@ export interface FullscreenSpec {
   right: PillSpec & { chevronSize: number; dotsSize: number };
 }
 
+function screen(p: Platform) {
+  const d = DEVICE[p];
+  return { width: d.width, screenHeight: d.height, safeTop: d.safeTop, safeBottom: d.safeBottom };
+}
+
 export const FULLSCREEN: Partial<Record<Platform, FullscreenSpec>> = {
   ios: {
-    width: 402,
-    screenHeight: 874,
-    safeTop: 62,
-    safeBottom: 34,
+    ...screen('ios'),
     // Not measurable from screenshots; check with the sniffer (contentSafeAreaInset.top).
     controlsRow: 42,
     sideInset: 16,
@@ -39,10 +41,7 @@ export const FULLSCREEN: Partial<Record<Platform, FullscreenSpec>> = {
     right: { height: 30, paddingLeft: 9, paddingRight: 8, gap: 20, chevronSize: 15, dotsSize: 20 },
   },
   android: {
-    width: 412,
-    screenHeight: 915,
-    safeTop: 40,
-    safeBottom: 24,
+    ...screen('android'),
     controlsRow: 48,
     sideInset: 16,
     left: { height: 32, paddingLeft: 10, paddingRight: 12, gap: 10, iconSize: 12, iconWeight: 2, fontSize: 14 },
