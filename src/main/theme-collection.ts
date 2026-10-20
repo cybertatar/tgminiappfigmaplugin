@@ -116,11 +116,13 @@ export function isThemeable(node: SceneNode): node is ThemeableNode {
   );
 }
 
-export function applyPreset(
+/** Sets the preset's mode on themeable nodes and switches kit components to its platform. */
+export async function applyPreset(
   nodes: readonly SceneNode[],
   collection: VariableCollection,
   preset: Preset,
-): number {
+  switchPlatform: (node: SceneNode, platform: Preset['platform']) => Promise<number>,
+): Promise<number> {
   const modeId = readModeMap(collection)[preset.id];
   if (!modeId) throw new Error(`"${preset.name}" is not in the Telegram Theme collection. Run Connect again.`);
   let count = 0;
@@ -128,7 +130,7 @@ export function applyPreset(
     if (!isThemeable(node)) continue;
     node.setExplicitVariableModeForCollection(collection, modeId);
     node.setPluginData(KEY_PRESET, preset.id);
-    // TODO(B1–B4): switch platform variant of system component instances inside `node`.
+    await switchPlatform(node, preset.platform);
     count++;
   }
   return count;

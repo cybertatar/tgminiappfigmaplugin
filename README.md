@@ -19,7 +19,8 @@ Full spec: [docs/SPEC.md](docs/SPEC.md).
 | A2 Apply theme to selection | ✅ (platform switch waits for components) |
 | Sniffer page | ✅ |
 | A3 Theme matrix | ✅ |
-| B1–B5 System components | ⏳ |
+| B3 Bottom bar: Main/Secondary buttons, all layouts and states | ✅ draft geometry |
+| B1, B2, B4, B5 Header, fullscreen controls, popups, screen template | ⏳ |
 | C1 Unbound colors: scan, suggest, bind, exceptions | ✅ |
 | C2 Contrast across themes | ⏳ |
 | D Handoff UI | ⏳ (`generateSnippet` is ready in core) |
@@ -41,7 +42,7 @@ src/core        pure functions (no Figma API) — covered by tests
 src/main        main thread: works with the document
 src/ui          Preact UI (iframe), inlined into dist/ui.html
 src/shared      UI <-> main message types
-src/components  system component specs per platform (TBD)
+src/components  system component specs per platform (sizes, fonts) — edit here to adjust
 presets/        theme presets, one JSON per theme
 reference/      client screenshots used to verify components
 sniffer/        Mini App page that captures real themeParams

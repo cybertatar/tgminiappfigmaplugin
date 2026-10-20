@@ -1,5 +1,6 @@
 // A3: "Lay out themes" — copies a screen into a section, one copy per theme.
 import { hexToRgb, layoutMatrix, type Preset } from '../core';
+import { switchPlatform } from './components';
 import { KEY_PRESET, readModeMap } from './theme-collection';
 
 const KEY_MATRIX_FOR = 'tgMatrixFor'; // on the section: source screen id
@@ -84,7 +85,7 @@ export async function buildMatrix(
   }
   section.resizeWithoutConstraints(layout.width, layout.height);
 
-  usable.forEach((preset, i) => {
+  for (const [i, preset] of usable.entries()) {
     const cell = layout.cells[i];
     const label = createLabel(preset);
     section.appendChild(label);
@@ -100,6 +101,7 @@ export async function buildMatrix(
     copy.setExplicitVariableModeForCollection(collection, modeMap[preset.id]);
     copy.setPluginData(KEY_PRESET, preset.id);
     copy.setPluginData(KEY_COPY_OF, source.id);
-  });
+    await switchPlatform(copy, preset.platform);
+  }
   return section;
 }

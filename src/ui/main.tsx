@@ -1,9 +1,10 @@
 import { render } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import { PRESETS, resolveParams, type Preset } from '../core';
-import type { MainToUi, PluginState, ScanResult, SyncReport } from '../shared/messages';
+import type { ComponentsReport, MainToUi, PluginState, ScanResult, SyncReport } from '../shared/messages';
 import { send } from './bridge';
 import { ChecksTab } from './checks';
+import { ComponentsTab } from './components-tab';
 import './styles.css';
 
 type Tab = 'themes' | 'components' | 'checks' | 'handoff';
@@ -171,6 +172,7 @@ function App() {
   const [report, setReport] = useState<SyncReport | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [scan, setScan] = useState<ScanResult | null>(null);
+  const [componentsReport, setComponentsReport] = useState<ComponentsReport | null>(null);
 
   useEffect(() => {
     onmessage = (e: MessageEvent) => {
@@ -181,6 +183,7 @@ function App() {
         setError(null);
       } else if (msg.type === 'sync-done') setReport(msg.report);
       else if (msg.type === 'scan-result') setScan(msg.result);
+      else if (msg.type === 'components-done') setComponentsReport(msg.report);
       else if (msg.type === 'error') setError(msg.message);
     };
     send({ type: 'ready' });
@@ -208,7 +211,7 @@ function App() {
           }}
         />
       ) : tab === 'components' ? (
-        <Placeholder what="Telegram system components" />
+        <ComponentsTab state={state} report={componentsReport} />
       ) : tab === 'checks' ? (
         <ChecksTab state={state} scan={scan} />
       ) : (

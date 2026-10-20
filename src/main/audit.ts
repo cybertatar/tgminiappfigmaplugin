@@ -5,7 +5,7 @@ import { KEY_PARAM } from './theme-collection';
 
 // 'self': skip this layer's own paints (set from a color group).
 // 'tree': skip the layer and everything inside (illustrations, logos, photos).
-const KEY_IGNORE = 'tgIgnore';
+export const KEY_IGNORE = 'tgIgnore';
 export type IgnoreMode = 'self' | 'tree';
 /** Vectors up to this size are treated as icons (they usually take text colors). */
 const ICON_MAX_SIZE = 48;

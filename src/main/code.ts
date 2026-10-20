@@ -2,6 +2,8 @@
 import { PRESETS, resolveParams } from '../core';
 import type { MainToUi, PluginState, UiToMain } from '../shared/messages';
 import { bindGroups, clearIgnored, collect, groupOccurrences, nodesOfGroup, setIgnored, themeVariables } from './audit';
+import { PLATFORM_LABEL } from '../components/bottom-bar';
+import { buildComponents, componentsReady, insertBottomBar, platformOf, screenOf, switchPlatform } from './components';
 import { buildMatrix, resolveScreens } from './matrix';
 import { applyPreset, findCollection, isThemeable, modeList, presetOf, syncCollection } from './theme-collection';
 
@@ -56,7 +58,14 @@ async function currentState(): Promise<PluginState> {
       unbound: selection.length ? collect(selection).occurrences.length : 0,
     },
     matrixPresetIds,
+    componentsReady: await componentsReady(),
+    insertTarget: insertTarget(selection),
   };
+}
+
+function insertTarget(selection: readonly SceneNode[]) {
+  const screen = selection.length === 1 ? screenOf(selection[0]) : null;
+  return screen ? { name: screen.name, platform: PLATFORM_LABEL[platformOf(screen)] } : null;
 }
 
 async function pushState() {
@@ -82,7 +91,7 @@ async function handle(msg: UiToMain) {
       const preset = PRESETS.find((p) => p.id === msg.presetId);
       if (!preset) throw new Error(`Unknown preset ${msg.presetId}`);
       const selection = figma.currentPage.selection;
-      const n = applyPreset(selection, collection, preset);
+      const n = await applyPreset(selection, collection, preset, switchPlatform);
       if (n === 0) throw new Error('Select a frame, section or component.');
       const unbound = collect(selection).occurrences.length;
       figma.notify(
@@ -107,6 +116,21 @@ async function handle(msg: UiToMain) {
       for (const screen of screens) sections.push(await buildMatrix(screen, collection, presets));
       figma.viewport.scrollAndZoomIntoView(sections);
       figma.notify(`Theme matrix: ${sections.length} ${sections.length === 1 ? 'screen' : 'screens'} × ${presets.length} themes`);
+      break;
+    }
+    case 'build-components': {
+      const report = await buildComponents();
+      post({ type: 'components-done', report });
+      figma.notify(`Components: ${report.created} created, ${report.updated} updated`);
+      break;
+    }
+    case 'insert-bottom-bar': {
+      const selection = figma.currentPage.selection;
+      const screen = selection.length === 1 ? screenOf(selection[0]) : null;
+      if (!screen) throw new Error('Select one screen frame.');
+      const bar = await insertBottomBar(screen, msg.layout);
+      figma.currentPage.selection = [bar];
+      figma.notify(`Bottom bar added to ${screen.name}`);
       break;
     }
     case 'scan': {

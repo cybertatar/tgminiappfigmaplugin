@@ -290,3 +290,46 @@ select {
 .warn.row {
   margin: 8px 0 0;
 }
+
+.layouts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin: 10px 0;
+}
+.layout {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  border: 1px solid var(--figma-color-border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.layout.on {
+  border-color: var(--figma-color-border-selected);
+  background: var(--figma-color-bg-selected);
+}
+.layout input {
+  display: none;
+}
+.layout-icon {
+  display: inline-flex;
+  gap: 2px;
+  width: 26px;
+  flex: none;
+}
+.layout-icon.v {
+  flex-direction: column;
+}
+.layout-icon span {
+  flex: 1;
+  height: 6px;
+  border-radius: 2px;
+}
+.layout-icon .m {
+  background: var(--figma-color-bg-brand);
+}
+.layout-icon .s {
+  box-shadow: inset 0 0 0 1px var(--figma-color-bg-brand);
+}

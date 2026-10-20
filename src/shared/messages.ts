@@ -1,4 +1,5 @@
 // Typed postMessage protocol between the UI iframe and the main thread.
+import type { BarLayout } from '../components/bottom-bar';
 import type { PaintTarget, Suggestion, ThemeParamKey } from '../core';
 
 export interface ModeInfo {
@@ -21,6 +22,16 @@ export interface PluginState {
   };
   /** Presets checked for the theme matrix (remembered between runs). */
   matrixPresetIds: string[];
+  /** System components page exists in this file. */
+  componentsReady: boolean;
+  /** Screen a component would be inserted into (top-level frame of the selection). */
+  insertTarget: { name: string; platform: string } | null;
+}
+
+export interface ComponentsReport {
+  created: number;
+  updated: number;
+  fontWarnings: string[];
 }
 
 export interface SyncReport {
@@ -75,10 +86,13 @@ export type UiToMain =
   /** Excludes the selected layers with everything inside them. */
   | { type: 'ignore-selection' }
   | { type: 'clear-ignored' }
-  | { type: 'show-group'; groupId: string };
+  | { type: 'show-group'; groupId: string }
+  | { type: 'build-components' }
+  | { type: 'insert-bottom-bar'; layout: BarLayout };
 
 export type MainToUi =
   | { type: 'state'; state: PluginState }
   | { type: 'sync-done'; report: SyncReport }
   | { type: 'scan-result'; result: ScanResult | null }
+  | { type: 'components-done'; report: ComponentsReport }
   | { type: 'error'; message: string };
