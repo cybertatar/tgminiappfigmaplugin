@@ -2,6 +2,7 @@
 import { hexToRgb, layoutMatrix, type Preset } from '../core';
 import { switchPlatform } from './components';
 import { KEY_PRESET, readModeMap } from './theme-collection';
+import { UserError } from './errors';
 
 const KEY_MATRIX_FOR = 'tgMatrixFor'; // on the section: source screen id
 const KEY_COPY_OF = 'tgMatrixCopyOf'; // on each copy: source screen id
@@ -58,7 +59,7 @@ export async function buildMatrix(
 ): Promise<SectionNode> {
   const modeMap = readModeMap(collection);
   const usable = presets.filter((p) => modeMap[p.id]);
-  if (usable.length === 0) throw new Error('None of the chosen themes are in the Telegram Theme collection.');
+  if (usable.length === 0) throw new UserError('None of the chosen themes are in the Telegram Theme collection.');
 
   await Promise.all([
     figma.loadFontAsync({ family: 'Inter', style: 'Semi Bold' }),

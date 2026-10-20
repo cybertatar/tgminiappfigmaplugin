@@ -3,6 +3,7 @@
 import type { FontWeight } from '../../components/fonts';
 import type { Platform, SystemColorKey, ThemeParamKey } from '../../core';
 import { KEY_COMPONENT, KEY_IGNORE } from '../keys';
+import { UserError } from '../errors';
 
 export { KEY_COMPONENT, KEY_IGNORE };
 const KEY_PAGE = 'tgPage';
@@ -18,13 +19,13 @@ export interface BuildContext {
 /** Paint bound to a `system/` variable (Telegram system UI color that follows light/dark). */
 export function systemPaint(ctx: BuildContext, key: SystemColorKey): SolidPaint {
   const v = ctx.system.get(key);
-  if (!v) throw new Error(`Variable system/${key} is missing. Run Update on the Themes tab.`);
+  if (!v) throw new UserError(`Variable system/${key} is missing. Run Update on the Themes tab.`);
   return figma.variables.setBoundVariableForPaint({ type: 'SOLID', color: { r: 0, g: 0, b: 0 } }, 'color', v);
 }
 
 export function boundPaint(ctx: BuildContext, key: ThemeParamKey, opacity = 1): SolidPaint {
   const v = ctx.vars.get(key);
-  if (!v) throw new Error(`Variable tg/${key} is missing. Run Connect on the Themes tab.`);
+  if (!v) throw new UserError(`Variable tg/${key} is missing. Run Connect on the Themes tab.`);
   return figma.variables.setBoundVariableForPaint({ type: 'SOLID', color: { r: 0, g: 0, b: 0 }, opacity }, 'color', v);
 }
 

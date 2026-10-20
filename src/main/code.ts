@@ -8,6 +8,7 @@ import { checkContrast } from './contrast';
 import { analyzeScreen } from './handoff';
 import { buildMatrix, resolveScreens } from './matrix';
 import { applyPreset, findCollection, isThemeable, modeList, presetOf, syncCollection } from './theme-collection';
+import { userMessage, UserError } from './errors';
 
 figma.showUI(__html__, { width: 360, height: 640, themeColors: true });
 
@@ -89,12 +90,12 @@ async function handle(msg: UiToMain) {
     }
     case 'apply-preset': {
       const collection = await findCollection();
-      if (!collection) throw new Error('Connect Telegram Theme first.');
+      if (!collection) throw new UserError('Connect Telegram Theme first.');
       const preset = PRESETS.find((p) => p.id === msg.presetId);
-      if (!preset) throw new Error(`Unknown preset ${msg.presetId}`);
+      if (!preset) throw new UserError(`Unknown preset ${msg.presetId}`);
       const selection = figma.currentPage.selection;
       const n = await applyPreset(selection, collection, preset, switchPlatform);
-      if (n === 0) throw new Error('Select a frame, section or component.');
+      if (n === 0) throw new UserError('Select a frame, section or component.');
       const bg = (await themeVariables(collection)).get('bg_color');
       if (bg) bindScreenBackgrounds(selection, bg);
       const unbound = (await collect(selection)).occurrences.length;
@@ -111,11 +112,11 @@ async function handle(msg: UiToMain) {
     }
     case 'build-matrix': {
       const collection = await findCollection();
-      if (!collection) throw new Error('Connect Telegram Theme first.');
+      if (!collection) throw new UserError('Connect Telegram Theme first.');
       const screens = await resolveScreens(figma.currentPage.selection);
-      if (screens.length === 0) throw new Error('Select a screen frame.');
+      if (screens.length === 0) throw new UserError('Select a screen frame.');
       const presets = PRESETS.filter((p) => matrixPresetIds.includes(p.id));
-      if (presets.length === 0) throw new Error('Choose at least one theme.');
+      if (presets.length === 0) throw new UserError('Choose at least one theme.');
       const sections: SectionNode[] = [];
       for (const screen of screens) sections.push(await buildMatrix(screen, collection, presets));
       figma.viewport.scrollAndZoomIntoView(sections);
@@ -131,7 +132,7 @@ async function handle(msg: UiToMain) {
     case 'insert': {
       const selection = figma.currentPage.selection;
       const screen = selection.length === 1 ? screenOf(selection[0]) : null;
-      if (!screen) throw new Error('Select one screen frame.');
+      if (!screen) throw new UserError('Select one screen frame.');
       const nodes = await insertKit(screen, msg.request);
       figma.currentPage.selection = nodes.filter((n) => !n.locked);
       figma.notify(`Added to ${screen.name}`);
@@ -139,16 +140,16 @@ async function handle(msg: UiToMain) {
     }
     case 'contrast': {
       const collection = await findCollection();
-      if (!collection) throw new Error('Connect Telegram Theme first.');
+      if (!collection) throw new UserError('Connect Telegram Theme first.');
       const selection = figma.currentPage.selection;
-      if (selection.length === 0) throw new Error('Select the screens to check.');
+      if (selection.length === 0) throw new UserError('Select the screens to check.');
       post({ type: 'contrast-result', result: await checkContrast(selection, collection, PRESETS) });
       break;
     }
     case 'handoff': {
       const selection = figma.currentPage.selection;
       const screen = selection.length === 1 ? screenOf(selection[0]) : null;
-      if (!screen) throw new Error('Select one screen frame.');
+      if (!screen) throw new UserError('Select one screen frame.');
       post({ type: 'handoff-result', result: await analyzeScreen(screen, msg.settingsButton) });
       break;
     }
@@ -163,7 +164,7 @@ async function handle(msg: UiToMain) {
     case 'scan': {
       if (!msg.rescan) {
         const selection = figma.currentPage.selection;
-        if (selection.length === 0) throw new Error('Select the layers to check.');
+        if (selection.length === 0) throw new UserError('Select the layers to check.');
         scanRootIds = selection.map((n) => n.id);
       }
       if (msg.referencePresetId !== undefined) scanReferenceId = msg.referencePresetId;
@@ -173,7 +174,7 @@ async function handle(msg: UiToMain) {
     }
     case 'bind': {
       const collection = await findCollection();
-      if (!collection) throw new Error('Connect Telegram Theme first.');
+      if (!collection) throw new UserError('Connect Telegram Theme first.');
       const report = await bindGroups(await scanRoots(), msg.bindings, await themeVariables(collection));
       figma.notify(
         `Bound ${report.bound} ${report.bound === 1 ? 'color' : 'colors'}` +
@@ -193,7 +194,7 @@ async function handle(msg: UiToMain) {
     }
     case 'ignore-selection': {
       const selection = figma.currentPage.selection;
-      if (selection.length === 0) throw new Error('Select illustrations, photos or logos to exclude.');
+      if (selection.length === 0) throw new UserError('Select illustrations, photos or logos to exclude.');
       setIgnored(selection, 'tree');
       figma.notify(`${selection.length} ${selection.length === 1 ? 'layer' : 'layers'} excluded with contents`);
       await postScan();
@@ -219,7 +220,8 @@ async function handle(msg: UiToMain) {
 
 figma.ui.onmessage = (msg: UiToMain) => {
   handle(msg).catch((e: unknown) => {
-    const message = e instanceof Error ? e.message : String(e);
+    // Figma API errors are developer messages; users get a plain one (see errors.ts).
+    const message = userMessage(e);
     post({ type: 'error', message });
     figma.notify(message, { error: true });
   });
