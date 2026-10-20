@@ -10,6 +10,7 @@ import { buildBottomComponents, TAG_BAR, TAG_BUTTON } from './bottom';
 import { buildFullscreenComponents, TAG_FULLSCREEN } from './fullscreen';
 import { buildHeaderComponents, TAG_HEADER } from './header';
 import { ensurePage, findPage, findSet, KEY_COMPONENT, variantName, type BuildContext, type SetReport } from './kit';
+import { UserError } from '../errors';
 
 
 async function resolveFonts(): Promise<{ fonts: BuildContext['fonts']; warnings: string[] }> {
@@ -96,7 +97,7 @@ async function variant(tag: string, props: Record<string, string>): Promise<Comp
   const set = findSet((await findPage())!, tag)!;
   const name = variantName(props);
   const component = set.children.find((c) => c.name === name) as ComponentNode | undefined;
-  if (!component) throw new Error(`Variant "${name}" not found. Run Create components again.`);
+  if (!component) throw new UserError(`Variant "${name}" not found. Run Create components again.`);
   return component;
 }
 

@@ -3,6 +3,7 @@
 import type { FontWeight } from '../../components/fonts';
 import type { Platform, SystemColorKey, ThemeParamKey } from '../../core';
 import { KEY_COMPONENT, KEY_IGNORE } from '../keys';
+import { UserError } from '../errors';
 
 export { KEY_COMPONENT, KEY_IGNORE };
 const KEY_PAGE = 'tgPage';
@@ -18,13 +19,13 @@ export interface BuildContext {
 /** Paint bound to a `system/` variable (Telegram system UI color that follows light/dark). */
 export function systemPaint(ctx: BuildContext, key: SystemColorKey): SolidPaint {
   const v = ctx.system.get(key);
-  if (!v) throw new Error(`Variable system/${key} is missing. Run Update on the Themes tab.`);
+  if (!v) throw new UserError(`Variable system/${key} is missing. Run Update on the Themes tab.`);
   return figma.variables.setBoundVariableForPaint({ type: 'SOLID', color: { r: 0, g: 0, b: 0 } }, 'color', v);
 }
 
 export function boundPaint(ctx: BuildContext, key: ThemeParamKey, opacity = 1): SolidPaint {
   const v = ctx.vars.get(key);
-  if (!v) throw new Error(`Variable tg/${key} is missing. Run Connect on the Themes tab.`);
+  if (!v) throw new UserError(`Variable tg/${key} is missing. Run Connect on the Themes tab.`);
   return figma.variables.setBoundVariableForPaint({ type: 'SOLID', color: { r: 0, g: 0, b: 0 }, opacity }, 'color', v);
 }
 
@@ -54,8 +55,18 @@ export function overlay(node: RectangleNode, parent: FrameNode | ComponentNode) 
   node.constraints = { horizontal: 'STRETCH', vertical: 'STRETCH' };
 }
 
+// Plugin data is stored per plugin ID, so after the ID changes (dev → published) it's gone.
+// Lookups fall back to names and re-tag what they find.
+function pageByTagOrName(): PageNode | undefined {
+  const tagged = figma.root.children.find((p) => p.getPluginData(KEY_PAGE) === 'components');
+  if (tagged) return tagged;
+  const named = figma.root.children.find((p) => p.name === PAGE_NAME);
+  named?.setPluginData(KEY_PAGE, 'components');
+  return named;
+}
+
 export async function ensurePage(): Promise<PageNode> {
-  let page = figma.root.children.find((p) => p.getPluginData(KEY_PAGE) === 'components');
+  let page = pageByTagOrName();
   if (!page) {
     page = figma.createPage();
     page.name = PAGE_NAME;
@@ -66,17 +77,25 @@ export async function ensurePage(): Promise<PageNode> {
 }
 
 export async function findPage(): Promise<PageNode | null> {
-  const page = figma.root.children.find((p) => p.getPluginData(KEY_PAGE) === 'components') ?? null;
+  const page = pageByTagOrName() ?? null;
   if (page) await page.loadAsync();
   return page;
 }
 
+const SET_NAMES: Record<string, string> = {
+  'bottom-button': 'TG Bottom Button',
+  'bottom-bar': 'TG Bottom Bar',
+  header: 'TG Header',
+  'fullscreen-controls': 'TG Fullscreen',
+};
+
 export function findSet(page: PageNode, tag: string): ComponentSetNode | null {
-  return (
-    (page.children.find((n) => n.type === 'COMPONENT_SET' && n.getPluginData(KEY_COMPONENT) === tag) as
-      | ComponentSetNode
-      | undefined) ?? null
-  );
+  const sets = page.children.filter((n): n is ComponentSetNode => n.type === 'COMPONENT_SET');
+  const tagged = sets.find((n) => n.getPluginData(KEY_COMPONENT) === tag);
+  if (tagged) return tagged;
+  const named = SET_NAMES[tag] ? sets.find((n) => n.name === SET_NAMES[tag] && !n.getPluginData(KEY_COMPONENT)) : undefined;
+  named?.setPluginData(KEY_COMPONENT, tag);
+  return named ?? null;
 }
 
 export const variantName = (props: Record<string, string>) =>

@@ -12,6 +12,7 @@ import {
   type SystemColorKey,
 } from '../core';
 import type { ModeInfo, SyncReport } from '../shared/messages';
+import { UserError } from './errors';
 
 export const COLLECTION_NAME = 'Telegram Theme';
 
@@ -160,7 +161,7 @@ export async function applyPreset(
   switchPlatform: (node: SceneNode, platform: Preset['platform']) => Promise<number>,
 ): Promise<number> {
   const modeId = readModeMap(collection)[preset.id];
-  if (!modeId) throw new Error(`"${preset.name}" is not in the Telegram Theme collection. Run Connect again.`);
+  if (!modeId) throw new UserError(`"${preset.name}" is not in the Telegram Theme collection. Run Connect again.`);
   let count = 0;
   for (const node of nodes) {
     if (!isThemeable(node)) continue;
@@ -190,7 +191,7 @@ export async function systemVariables(collection: VariableCollection): Promise<M
   const map = new Map<SystemColorKey, Variable>();
   for (const v of vars) {
     if (v.variableCollectionId !== collection.id) continue;
-    const key = v.getPluginData(KEY_SYSTEM) as SystemColorKey;
+    const key = (v.getPluginData(KEY_SYSTEM) || (v.name.startsWith('system/') ? v.name.slice(7) : '')) as SystemColorKey;
     if (key) map.set(key, v);
   }
   return map;
