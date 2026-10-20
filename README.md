@@ -16,11 +16,13 @@ Full spec: [docs/SPEC.md](docs/SPEC.md).
 |---|---|
 | `/core`: colors (CIEDE2000, WCAG), matching, presets, snippet | ✅ with tests |
 | A1 `Telegram Theme` collection | ✅ |
-| A2 Apply theme to selection | ✅ (platform switch waits for components) |
+| A2 Apply theme to selection (+ platform of kit components) | ✅ |
 | Sniffer page | ✅ |
 | A3 Theme matrix | ✅ |
-| B3 Bottom bar: Main/Secondary buttons, all layouts and states | ✅ draft geometry |
-| B1, B2, B4, B5 Header, fullscreen controls, popups, screen template | ⏳ |
+| B1 Header (windowed): Close/Back, menu, header colors, pressed states | ✅ iOS from official docs, others draft |
+| B2 Fullscreen controls + safe area guide | ✅ iOS from official docs, Android draft |
+| B3 Bottom bar: Main/Secondary buttons, all layouts and states | ✅ iOS from official docs, others draft |
+| B4, B5 Popups, screen template | ⏳ |
 | C1 Unbound colors: scan, suggest, bind, exceptions | ✅ |
 | C2 Contrast across themes | ⏳ |
 | D Handoff UI | ⏳ (`generateSnippet` is ready in core) |

@@ -7,16 +7,33 @@ export interface FontCandidate {
   styles: string[];
 }
 
-export const BUTTON_FONTS: Record<Platform, FontCandidate[]> = {
-  ios: [
-    { family: 'SF Pro Text', styles: ['Semibold'] },
-    { family: 'SF Pro', styles: ['Semibold'] },
-  ],
-  android: [{ family: 'Roboto', styles: ['Medium'] }],
-  desktop: [{ family: 'Open Sans', styles: ['SemiBold', 'Semibold'] }],
+export type FontWeight = 'regular' | 'semibold';
+
+export const PLATFORM_FONTS: Record<Platform, Record<FontWeight, FontCandidate[]>> = {
+  ios: {
+    regular: [
+      { family: 'SF Pro Text', styles: ['Regular'] },
+      { family: 'SF Pro', styles: ['Regular'] },
+    ],
+    semibold: [
+      { family: 'SF Pro Text', styles: ['Semibold'] },
+      { family: 'SF Pro', styles: ['Semibold'] },
+    ],
+  },
+  android: {
+    regular: [{ family: 'Roboto', styles: ['Regular'] }],
+    semibold: [{ family: 'Roboto', styles: ['Medium'] }],
+  },
+  desktop: {
+    regular: [{ family: 'Open Sans', styles: ['Regular'] }],
+    semibold: [{ family: 'Open Sans', styles: ['SemiBold', 'Semibold'] }],
+  },
 };
 
-export const FALLBACK_FONT = { family: 'Inter', style: 'Semi Bold' };
+export const FALLBACK_FONTS: Record<FontWeight, { family: string; style: string }> = {
+  regular: { family: 'Inter', style: 'Regular' },
+  semibold: { family: 'Inter', style: 'Semi Bold' },
+};
 
 /** Picks the first available candidate; `available` holds "family|style" keys. */
 export function pickFont(

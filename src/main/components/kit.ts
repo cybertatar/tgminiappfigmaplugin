@@ -1,18 +1,17 @@
 // Helpers for building components idempotently: every builder finds its child
 // by name and updates it in place, so re-running never breaks existing instances.
-import type { ThemeParamKey } from '../../core';
-import { KEY_IGNORE } from '../audit';
+import type { FontWeight } from '../../components/fonts';
+import type { Platform, ThemeParamKey } from '../../core';
+import { KEY_COMPONENT, KEY_IGNORE } from '../keys';
 
-export { KEY_IGNORE };
-
-export const KEY_COMPONENT = 'tgComponent'; // on component sets: which kit component
+export { KEY_COMPONENT, KEY_IGNORE };
 const KEY_PAGE = 'tgPage';
 
 export const PAGE_NAME = 'TG System Components';
 
 export interface BuildContext {
   vars: Map<ThemeParamKey, Variable>;
-  fonts: Record<string, FontName>;
+  fonts: Record<Platform, Record<FontWeight, FontName>>;
 }
 
 export function boundPaint(ctx: BuildContext, key: ThemeParamKey, opacity = 1): SolidPaint {
@@ -153,4 +152,87 @@ export function ensureTextProperty(set: ComponentSetNode, name: string, defaultV
     ([k, d]) => d.type === 'TEXT' && k.split('#')[0] === name,
   );
   return existing ? existing[0] : set.addComponentProperty(name, 'TEXT', defaultValue);
+}
+
+export function rawPaint(hex: string, opacity = 1): SolidPaint {
+  const n = parseInt(hex.slice(1), 16);
+  return { type: 'SOLID', color: { r: ((n >> 16) & 255) / 255, g: ((n >> 8) & 255) / 255, b: (n & 255) / 255 }, opacity };
+}
+
+export type IconKind = 'close' | 'chevron-left' | 'arrow-left' | 'chevron-down' | 'dots-h' | 'dots-v' | 'dots-circle';
+
+function strokeVector(path: string, paint: SolidPaint, weight: number): VectorNode {
+  const v = figma.createVector();
+  v.vectorPaths = [{ windingRule: 'NONE', data: path }];
+  v.fills = [];
+  v.strokes = [paint];
+  v.strokeWeight = weight;
+  v.strokeCap = 'ROUND';
+  v.strokeJoin = 'ROUND';
+  return v;
+}
+
+function dots(frame: FrameNode, s: number, paint: SolidPaint, vertical: boolean, d: number, spread: number) {
+  for (const t of [-spread, 0, spread]) {
+    const dot = figma.createEllipse();
+    dot.resize(d, d);
+    dot.fills = [paint];
+    frame.appendChild(dot);
+    dot.x = (vertical ? s / 2 : s / 2 + t * s) - d / 2;
+    dot.y = (vertical ? s / 2 + t * s : s / 2) - d / 2;
+  }
+}
+
+/**
+ * Simple system glyphs drawn as vectors (no Telegram assets). The glyph is redrawn on every
+ * build; the icon frame keeps its identity so instance overrides on it survive.
+ */
+export function ensureIcon(parent: BaseNode & ChildrenMixin, name: string, kind: IconKind, s: number, paint: SolidPaint) {
+  const frame = ensureChild(parent, name, 'FRAME', () => figma.createFrame());
+  frame.resize(s, s);
+  frame.fills = [];
+  frame.clipsContent = false;
+  for (const c of [...frame.children]) c.remove();
+  const w = Math.max(1.5, s / 12);
+  const p = (x: number, y: number) => `${(x * s).toFixed(2)} ${(y * s).toFixed(2)}`;
+
+  let glyph: VectorNode | null = null;
+  switch (kind) {
+    case 'close':
+      glyph = strokeVector(`M ${p(0.25, 0.25)} L ${p(0.75, 0.75)} M ${p(0.75, 0.25)} L ${p(0.25, 0.75)}`, paint, w);
+      break;
+    case 'chevron-left':
+      glyph = strokeVector(`M ${p(0.62, 0.15)} L ${p(0.3, 0.5)} L ${p(0.62, 0.85)}`, paint, w * 1.1);
+      break;
+    case 'arrow-left':
+      glyph = strokeVector(`M ${p(0.82, 0.5)} L ${p(0.18, 0.5)} M ${p(0.45, 0.23)} L ${p(0.18, 0.5)} L ${p(0.45, 0.77)}`, paint, w);
+      break;
+    case 'chevron-down':
+      glyph = strokeVector(`M ${p(0.22, 0.38)} L ${p(0.5, 0.64)} L ${p(0.78, 0.38)}`, paint, w);
+      break;
+    case 'dots-h':
+      dots(frame, s, paint, false, s * 0.17, 0.3);
+      break;
+    case 'dots-v':
+      dots(frame, s, paint, true, s * 0.15, 0.27);
+      break;
+    case 'dots-circle': {
+      const ring = figma.createEllipse();
+      const rw = Math.max(1.2, s / 15);
+      ring.resize(s - rw, s - rw);
+      ring.fills = [];
+      ring.strokes = [paint];
+      ring.strokeWeight = rw;
+      frame.appendChild(ring);
+      ring.x = ring.y = rw / 2;
+      dots(frame, s, paint, false, s * 0.13, 0.22);
+      break;
+    }
+  }
+  if (glyph) {
+    frame.appendChild(glyph);
+    glyph.x = (s - glyph.width) / 2;
+    glyph.y = (s - glyph.height) / 2;
+  }
+  return frame;
 }

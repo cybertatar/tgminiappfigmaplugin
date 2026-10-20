@@ -80,9 +80,9 @@ function screen() {
 }
 
 describe('collect + group', () => {
-  it('finds unbound solid paints and suggests params by usage', () => {
+  it('finds unbound solid paints and suggests params by usage', async () => {
     const root = screen();
-    const { occurrences, stats } = collect([root]);
+    const { occurrences, stats } = await collect([root]);
     const groups = groupOccurrences(occurrences, ios);
     const byId = Object.fromEntries(groups.map((g) => [g.id, g]));
 
@@ -97,15 +97,15 @@ describe('collect + group', () => {
     expect(stats).toMatchObject({ styled: 1, gradients: 1, ignored: 0 });
   });
 
-  it('respects self and tree exceptions', () => {
+  it('respects self and tree exceptions', async () => {
     const root = screen();
     setIgnored([root], 'self');
     setIgnored([root.children.find((c: any) => c.name === 'Illustration')], 'tree');
-    const ids = groupOccurrences(collect([root]).occurrences, ios).map((g) => g.id);
+    const ids = groupOccurrences((await collect([root])).occurrences, ios).map((g) => g.id);
     expect(ids).not.toContain('fill|#ffffff'); // root's own fill skipped
     expect(ids).toContain('text|#000000'); // children still checked
     expect(ids).not.toContain('fill|#ff00ff'); // whole illustration skipped
-    expect(collect([root]).stats.ignored).toBe(2);
+    expect((await collect([root])).stats.ignored).toBe(2);
   });
 });
 
@@ -134,7 +134,7 @@ describe('bindGroups', () => {
     // Not chosen: still raw.
     expect(root.children[2].fills[0].boundVariables).toBeUndefined();
 
-    const left = groupOccurrences(collect([root]).occurrences, ios).map((g) => g.id);
+    const left = groupOccurrences((await collect([root])).occurrences, ios).map((g) => g.id);
     expect(left).not.toContain('text|#000000');
     expect(left).toContain('fill|#007aff');
   });

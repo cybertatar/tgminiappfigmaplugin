@@ -1,5 +1,7 @@
 // Typed postMessage protocol between the UI iframe and the main thread.
 import type { BarLayout } from '../components/bottom-bar';
+import type { FullscreenLeft, FullscreenTone } from '../components/fullscreen';
+import type { HeaderColor, HeaderLeft } from '../components/header';
 import type { PaintTarget, Suggestion, ThemeParamKey } from '../core';
 
 export interface ModeInfo {
@@ -27,6 +29,11 @@ export interface PluginState {
   /** Screen a component would be inserted into (top-level frame of the selection). */
   insertTarget: { name: string; platform: string } | null;
 }
+
+export type InsertRequest =
+  | { kind: 'bottom-bar'; layout: BarLayout }
+  | { kind: 'header'; left: HeaderLeft; color: HeaderColor }
+  | { kind: 'fullscreen'; left: FullscreenLeft; tone: FullscreenTone; guide: boolean };
 
 export interface ComponentsReport {
   created: number;
@@ -88,7 +95,7 @@ export type UiToMain =
   | { type: 'clear-ignored' }
   | { type: 'show-group'; groupId: string }
   | { type: 'build-components' }
-  | { type: 'insert-bottom-bar'; layout: BarLayout };
+  | { type: 'insert'; request: InsertRequest };
 
 export type MainToUi =
   | { type: 'state'; state: PluginState }

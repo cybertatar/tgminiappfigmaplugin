@@ -1,5 +1,7 @@
 // B3: geometry of the bottom bar and its Main/Secondary buttons per platform.
-// DRAFT: values are approximations, not yet measured from client screenshots (see /reference).
+// iOS: measured from the official "WebViewColors explained" illustration (see /reference):
+//   button 361x50 at 16pt side insets, ~10pt radius, 16pt above the button, hairline on top.
+// Android, Desktop: DRAFT approximations, not yet checked against clients.
 // Update the numbers here — the plugin rebuilds components in place.
 import type { Platform } from '../core';
 
@@ -16,19 +18,22 @@ export interface BottomBarSpec {
   spinnerSize: number;
   /** System safe area below the bar (iOS home indicator). 0 = none. */
   safeAreaBottom: number;
+  /** Hairline between content and the bar. */
+  topSeparator: boolean;
 }
 
 export const BOTTOM_BAR: Record<Platform, BottomBarSpec> = {
   ios: {
     width: 393,
-    padding: { top: 8, right: 16, bottom: 8, left: 16 },
+    padding: { top: 16, right: 16, bottom: 8, left: 16 },
     gap: 10,
     buttonHeight: 50,
-    radius: 12,
+    radius: 10,
     fontSize: 17,
     textCase: 'ORIGINAL',
     spinnerSize: 22,
     safeAreaBottom: 34,
+    topSeparator: true,
   },
   android: {
     width: 412,
@@ -40,6 +45,7 @@ export const BOTTOM_BAR: Record<Platform, BottomBarSpec> = {
     textCase: 'ORIGINAL',
     spinnerSize: 20,
     safeAreaBottom: 0,
+    topSeparator: false,
   },
   desktop: {
     width: 400,
@@ -51,6 +57,7 @@ export const BOTTOM_BAR: Record<Platform, BottomBarSpec> = {
     textCase: 'ORIGINAL',
     spinnerSize: 18,
     safeAreaBottom: 0,
+    topSeparator: false,
   },
 };
 

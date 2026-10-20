@@ -28,7 +28,8 @@ import {
 export const TAG_BUTTON = 'bottom-button';
 export const TAG_BAR = 'bottom-bar';
 
-const DRAFT_NOTE = 'DRAFT geometry: not yet verified against client screenshots. Sizes live in src/components/bottom-bar.ts.';
+const DRAFT_NOTE =
+  'iOS measured from the official Telegram docs illustration; Android/Desktop are DRAFT. Sizes: src/components/bottom-bar.ts.';
 
 function buildButton(c: ComponentNode, ctx: BuildContext, platform: Platform, type: ButtonType, state: ButtonState) {
   const spec = BOTTOM_BAR[platform];
@@ -48,7 +49,7 @@ function buildButton(c: ComponentNode, ctx: BuildContext, platform: Platform, ty
   c.description = DRAFT_NOTE;
 
   const label = ensureChild(c, 'Label', 'TEXT', () => figma.createText());
-  label.fontName = ctx.fonts[platform];
+  label.fontName = ctx.fonts[platform].semibold;
   if (!label.characters) label.characters = DEFAULT_LABEL.Main;
   label.fontSize = spec.fontSize;
   label.textCase = spec.textCase;
@@ -117,6 +118,12 @@ async function buildBar(
   c.paddingBottom = spec.safeAreaBottom ? 0 : spec.padding.bottom;
   c.itemSpacing = spec.padding.bottom;
   c.fills = [boundPaint(ctx, 'bottom_bar_bg_color')];
+  if (spec.topSeparator) {
+    c.strokes = [boundPaint(ctx, 'section_separator_color')];
+    c.strokeAlign = 'INSIDE';
+    c.strokeTopWeight = 0.5;
+    c.strokeRightWeight = c.strokeBottomWeight = c.strokeLeftWeight = 0;
+  } else c.strokes = [];
   c.description = DRAFT_NOTE;
 
   const row = ensureChild(c, 'Buttons', 'FRAME', () => figma.createFrame());
@@ -195,8 +202,6 @@ export async function buildBottomComponents(page: PageNode, ctx: BuildContext): 
   );
   const { set: bar, report: r2 } = await ensureSet(page, TAG_BAR, 'TG Bottom Bar', barVariants, BAR_LAYOUTS.length);
   bar.description = DRAFT_NOTE;
-  bar.x = buttons.x;
-  bar.y = buttons.y + buttons.height + 120;
 
   return { created: r1.created + r2.created, updated: r1.updated + r2.updated };
 }

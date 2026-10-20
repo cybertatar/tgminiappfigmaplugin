@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BAR_LAYOUTS, barArrangement, BOTTOM_BAR } from '../src/components/bottom-bar';
-import { BUTTON_FONTS, pickFont } from '../src/components/fonts';
+import { PLATFORM_FONTS, pickFont } from '../src/components/fonts';
 import { PLATFORMS } from '../src/core';
 
 describe('bottom bar config', () => {
@@ -22,8 +22,8 @@ describe('bottom bar config', () => {
 describe('pickFont', () => {
   it('takes the first available family and style spelling', () => {
     const available = new Set(['SF Pro|Semibold', 'Open Sans|SemiBold', 'Inter|Semi Bold']);
-    expect(pickFont(BUTTON_FONTS.ios, available)).toEqual({ family: 'SF Pro', style: 'Semibold' });
-    expect(pickFont(BUTTON_FONTS.desktop, available)).toEqual({ family: 'Open Sans', style: 'SemiBold' });
-    expect(pickFont(BUTTON_FONTS.android, available)).toBeNull();
+    expect(pickFont(PLATFORM_FONTS.ios.semibold, available)).toEqual({ family: 'SF Pro', style: 'Semibold' });
+    expect(pickFont(PLATFORM_FONTS.desktop.semibold, available)).toEqual({ family: 'Open Sans', style: 'SemiBold' });
+    expect(pickFont(PLATFORM_FONTS.android.semibold, available)).toBeNull();
   });
 });

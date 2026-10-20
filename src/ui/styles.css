@@ -333,3 +333,49 @@ select {
 .layout-icon .s {
   box-shadow: inset 0 0 0 1px var(--figma-color-bg-brand);
 }
+
+.kinds {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+.kind {
+  display: grid;
+  text-align: left;
+  gap: 1px;
+  padding: 6px 8px;
+  border: 1px solid var(--figma-color-border);
+  border-radius: 6px;
+  background: none;
+}
+.kind.on {
+  border-color: var(--figma-color-border-selected);
+  background: var(--figma-color-bg-selected);
+}
+.options {
+  display: grid;
+  gap: 8px;
+  margin: 4px 0 10px;
+}
+.opt {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  align-items: center;
+  gap: 8px;
+}
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--figma-color-border);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.segmented button {
+  flex: 1;
+  border: 0;
+  background: none;
+  padding: 3px 10px;
+}
+.segmented button.on {
+  background: var(--figma-color-bg-selected);
+  font-weight: 600;
+}

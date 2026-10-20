@@ -1,11 +1,11 @@
 // C1: finds solid paints not bound to a variable and binds them to Telegram Theme variables.
 import { hexToRgb, rgbToHex, suggestParam, type PaintTarget, type ResolvedThemeParams, type ThemeParamKey } from '../core';
 import type { ColorGroup, ScanStats } from '../shared/messages';
+import { KEY_COMPONENT, KEY_IGNORE } from './keys';
 import { KEY_PARAM } from './theme-collection';
 
 // 'self': skip this layer's own paints (set from a color group).
 // 'tree': skip the layer and everything inside (illustrations, logos, photos).
-export const KEY_IGNORE = 'tgIgnore';
 export type IgnoreMode = 'self' | 'tree';
 /** Vectors up to this size are treated as icons (they usually take text colors). */
 const ICON_MAX_SIZE = 48;
@@ -40,7 +40,21 @@ export interface Collected {
   stats: ScanStats;
 }
 
-export function collect(roots: readonly SceneNode[]): Collected {
+/** Kit components are bound by construction; their decorative paints (shine, translucent pills) are intended. */
+async function isKitInstance(node: InstanceNode, cache: Map<string, boolean>): Promise<boolean> {
+  const main = await node.getMainComponentAsync();
+  if (!main) return false;
+  let result = cache.get(main.id);
+  if (result === undefined) {
+    const owner = main.parent?.type === 'COMPONENT_SET' ? main.parent : main;
+    result = owner.getPluginData(KEY_COMPONENT) !== '';
+    cache.set(main.id, result);
+  }
+  return result;
+}
+
+export async function collect(roots: readonly SceneNode[]): Promise<Collected> {
+  const kitCache = new Map<string, boolean>();
   const occurrences: Occurrence[] = [];
   const stats: ScanStats = { layers: 0, gradients: 0, styled: 0, ignored: 0, truncated: false };
 
@@ -62,11 +76,13 @@ export function collect(roots: readonly SceneNode[]): Collected {
     });
   };
 
-  const visit = (node: SceneNode) => {
+  const visit = async (node: SceneNode) => {
     if (stats.layers >= SCAN_NODE_LIMIT) {
       stats.truncated = true;
       return;
     }
+    if (node.type === 'COMPONENT_SET' && node.getPluginData(KEY_COMPONENT)) return;
+    if (node.type === 'INSTANCE' && (await isKitInstance(node, kitCache))) return;
     const ignore = node.getPluginData(KEY_IGNORE);
     if (ignore) stats.ignored++;
     if (ignore === 'tree') return;
@@ -89,10 +105,10 @@ export function collect(roots: readonly SceneNode[]): Collected {
       if (hasStyle(node.strokeStyleId)) stats.styled++;
       else addPaints(node, 'strokes', node.strokes, 'stroke');
     }
-    if ('children' in node) for (const child of node.children) visit(child);
+    if ('children' in node) for (const child of node.children) await visit(child);
   };
 
-  for (const root of roots) visit(root);
+  for (const root of roots) await visit(root);
   return { occurrences, stats };
 }
 
@@ -118,9 +134,9 @@ export function groupOccurrences(occurrences: readonly Occurrence[], params: Res
 }
 
 /** Nodes that contain a given group (for "Show on canvas" and "Ignore"). */
-export function nodesOfGroup(roots: readonly SceneNode[], id: string): SceneNode[] {
+export async function nodesOfGroup(roots: readonly SceneNode[], id: string): Promise<SceneNode[]> {
   const nodes = new Map<string, SceneNode>();
-  for (const o of collect(roots).occurrences) {
+  for (const o of (await collect(roots)).occurrences) {
     if (groupId(o.target, o.hex) === id) nodes.set(o.node.id, o.node);
   }
   return [...nodes.values()];
@@ -152,7 +168,7 @@ export async function bindGroups(
 
   // One write per node + field + text range, with all paint indexes updated at once.
   const edits = new Map<string, { o: Occurrence; byIndex: Map<number, Variable> }>();
-  for (const o of collect(roots).occurrences) {
+  for (const o of (await collect(roots)).occurrences) {
     const key = keyByGroup.get(groupId(o.target, o.hex));
     const variable = key && variables.get(key);
     if (!variable) continue;

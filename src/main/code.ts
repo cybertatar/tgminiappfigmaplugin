@@ -3,7 +3,7 @@ import { PRESETS, resolveParams } from '../core';
 import type { MainToUi, PluginState, UiToMain } from '../shared/messages';
 import { bindGroups, clearIgnored, collect, groupOccurrences, nodesOfGroup, setIgnored, themeVariables } from './audit';
 import { PLATFORM_LABEL } from '../components/bottom-bar';
-import { buildComponents, componentsReady, insertBottomBar, platformOf, screenOf, switchPlatform } from './components';
+import { buildComponents, componentsReady, insertKit, platformOf, screenOf, switchPlatform } from './components';
 import { buildMatrix, resolveScreens } from './matrix';
 import { applyPreset, findCollection, isThemeable, modeList, presetOf, syncCollection } from './theme-collection';
 
@@ -34,7 +34,7 @@ async function postScan() {
   const referencePresetId =
     scanReferenceId ?? (collection && presetOf(roots, collection)) ?? PRESETS[0].id;
   const preset = PRESETS.find((p) => p.id === referencePresetId) ?? PRESETS[0];
-  const { occurrences, stats } = collect(roots);
+  const { occurrences, stats } = await collect(roots);
   post({
     type: 'scan-result',
     result: {
@@ -55,7 +55,7 @@ async function currentState(): Promise<PluginState> {
       themeable: selection.filter(isThemeable).length,
       presetId: collection ? presetOf(selection, collection) : null,
       screens: (await resolveScreens(selection)).length,
-      unbound: selection.length ? collect(selection).occurrences.length : 0,
+      unbound: selection.length ? (await collect(selection)).occurrences.length : 0,
     },
     matrixPresetIds,
     componentsReady: await componentsReady(),
@@ -93,7 +93,7 @@ async function handle(msg: UiToMain) {
       const selection = figma.currentPage.selection;
       const n = await applyPreset(selection, collection, preset, switchPlatform);
       if (n === 0) throw new Error('Select a frame, section or component.');
-      const unbound = collect(selection).occurrences.length;
+      const unbound = (await collect(selection)).occurrences.length;
       figma.notify(
         `${preset.name} → ${n} ${n === 1 ? 'layer' : 'layers'}` +
           (unbound ? ` · ${unbound} colors not bound, see Checks` : ''),
@@ -124,13 +124,13 @@ async function handle(msg: UiToMain) {
       figma.notify(`Components: ${report.created} created, ${report.updated} updated`);
       break;
     }
-    case 'insert-bottom-bar': {
+    case 'insert': {
       const selection = figma.currentPage.selection;
       const screen = selection.length === 1 ? screenOf(selection[0]) : null;
       if (!screen) throw new Error('Select one screen frame.');
-      const bar = await insertBottomBar(screen, msg.layout);
-      figma.currentPage.selection = [bar];
-      figma.notify(`Bottom bar added to ${screen.name}`);
+      const nodes = await insertKit(screen, msg.request);
+      figma.currentPage.selection = nodes.filter((n) => !n.locked);
+      figma.notify(`Added to ${screen.name}`);
       break;
     }
     case 'scan': {
@@ -158,7 +158,7 @@ async function handle(msg: UiToMain) {
     }
     case 'ignore': {
       const roots = await scanRoots();
-      const nodes = msg.groupIds.flatMap((id) => nodesOfGroup(roots, id));
+      const nodes = (await Promise.all(msg.groupIds.map((id) => nodesOfGroup(roots, id)))).flat();
       setIgnored(nodes, 'self');
       figma.notify(`${nodes.length} ${nodes.length === 1 ? 'layer' : 'layers'} marked as exceptions`);
       await postScan();
@@ -179,7 +179,7 @@ async function handle(msg: UiToMain) {
       break;
     }
     case 'show-group': {
-      const nodes = nodesOfGroup(await scanRoots(), msg.groupId);
+      const nodes = await nodesOfGroup(await scanRoots(), msg.groupId);
       if (nodes.length) {
         figma.currentPage.selection = nodes;
         figma.viewport.scrollAndZoomIntoView(nodes);
