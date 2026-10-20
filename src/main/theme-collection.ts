@@ -7,7 +7,7 @@ export const COLLECTION_NAME = 'Telegram Theme';
 // Private pluginData keys. Names can be edited by users, these can't.
 const KEY_COLLECTION = 'tgKit';
 const KEY_MODES = 'tgModes'; // JSON: presetId -> modeId
-const KEY_PARAM = 'tgParam';
+export const KEY_PARAM = 'tgParam';
 export const KEY_PRESET = 'tgPreset';
 
 export async function findCollection(): Promise<VariableCollection | null> {

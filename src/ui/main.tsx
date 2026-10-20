@@ -1,10 +1,10 @@
 import { render } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import { PRESETS, resolveParams, type Preset } from '../core';
-import type { MainToUi, PluginState, SyncReport, UiToMain } from '../shared/messages';
+import type { MainToUi, PluginState, ScanResult, SyncReport } from '../shared/messages';
+import { send } from './bridge';
+import { ChecksTab } from './checks';
 import './styles.css';
-
-const send = (msg: UiToMain) => parent.postMessage({ pluginMessage: msg }, '*');
 
 type Tab = 'themes' | 'components' | 'checks' | 'handoff';
 const TABS: { id: Tab; label: string }[] = [
@@ -27,7 +27,15 @@ function Swatches({ preset }: { preset: Preset }) {
   );
 }
 
-function ThemesTab({ state, report }: { state: PluginState; report: SyncReport | null }) {
+function ThemesTab({
+  state,
+  report,
+  onReview,
+}: {
+  state: PluginState;
+  report: SyncReport | null;
+  onReview: () => void;
+}) {
   const connected = state.collection !== null;
   const inCollection = new Set(state.collection?.modes.map((m) => m.presetId));
   const canApply = connected && state.selection.themeable > 0;
@@ -61,6 +69,17 @@ function ThemesTab({ state, report }: { state: PluginState; report: SyncReport |
             ? 'Select a frame to apply a theme'
             : 'Themes'}
       </div>
+      {connected && state.selection.unbound > 0 && (
+        <div class="warn row">
+          <span>
+            {state.selection.unbound} {state.selection.unbound === 1 ? 'color isn’t' : 'colors aren’t'} bound to the
+            theme and won’t change.
+          </span>
+          <button class="secondary" onClick={onReview}>
+            Review
+          </button>
+        </div>
+      )}
       <ul class="presets">
         {PRESETS.map((preset) => {
           const active = state.selection.presetId === preset.id;
@@ -151,6 +170,7 @@ function App() {
   const [state, setState] = useState<PluginState | null>(null);
   const [report, setReport] = useState<SyncReport | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [scan, setScan] = useState<ScanResult | null>(null);
 
   useEffect(() => {
     onmessage = (e: MessageEvent) => {
@@ -160,6 +180,7 @@ function App() {
         setState(msg.state);
         setError(null);
       } else if (msg.type === 'sync-done') setReport(msg.report);
+      else if (msg.type === 'scan-result') setScan(msg.result);
       else if (msg.type === 'error') setError(msg.message);
     };
     send({ type: 'ready' });
@@ -178,11 +199,18 @@ function App() {
       {!state ? (
         <p class="muted pad">Loading…</p>
       ) : tab === 'themes' ? (
-        <ThemesTab state={state} report={report} />
+        <ThemesTab
+          state={state}
+          report={report}
+          onReview={() => {
+            setTab('checks');
+            send({ type: 'scan' });
+          }}
+        />
       ) : tab === 'components' ? (
         <Placeholder what="Telegram system components" />
       ) : tab === 'checks' ? (
-        <Placeholder what="Unbound colors & contrast audit" />
+        <ChecksTab state={state} scan={scan} />
       ) : (
         <Placeholder what="Copy for development" />
       )}

@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest';
 import {
   composite,
   contrastRatio,
-  deltaEOK,
+  deltaE2000,
+  deltaE2000Lab,
   generateSnippet,
   hexToRgb,
   isLargeText,
   layoutMatrix,
+  suggestParam,
   normalizeHex,
   parsePresetJson,
   preferredOnColor,
@@ -65,12 +67,14 @@ describe('color', () => {
     expect(preferredOnColor(hexToRgb('#f8f8f8'))).toBe('dark');
   });
 
-  it('OKLab distance is 0 for equal and grows with difference', () => {
-    expect(deltaEOK(hexToRgb('#5288c1'), hexToRgb('#5288c1'))).toBe(0);
-    const near = deltaEOK(hexToRgb('#5288c1'), hexToRgb('#5389c2'));
-    const far = deltaEOK(hexToRgb('#5288c1'), hexToRgb('#ec3942'));
-    expect(near).toBeLessThan(0.01);
-    expect(far).toBeGreaterThan(0.1);
+  it('CIEDE2000 matches reference data and behaves near black', () => {
+    // Sharma et al. 2005, test pairs 1 and 17.
+    expect(deltaE2000Lab({ L: 50, a: 2.6772, b: -79.7751 }, { L: 50, a: 0, b: -82.7485 })).toBeCloseTo(2.0425, 4);
+    expect(deltaE2000Lab({ L: 50, a: 2.5, b: 0 }, { L: 73, a: 25, b: -18 })).toBeCloseTo(27.1492, 4);
+    expect(deltaE2000(hexToRgb('#5288c1'), hexToRgb('#5288c1'))).toBe(0);
+    expect(deltaE2000(hexToRgb('#5288c1'), hexToRgb('#5389c2'))).toBeLessThan(1);
+    expect(deltaE2000(hexToRgb('#0a0a0a'), hexToRgb('#000000'))).toBeLessThan(6);
+    expect(deltaE2000(hexToRgb('#5288c1'), hexToRgb('#ec3942'))).toBeGreaterThan(30);
   });
 });
 
@@ -190,5 +194,25 @@ describe('matrix layout', () => {
 
   it('handles a single copy', () => {
     expect(layoutMatrix(1, { width: 100, height: 100 }).width).toBe(260);
+  });
+});
+
+describe('suggestParam', () => {
+  const ios = resolveParams(PRESETS.find((p) => p.id === 'ios-light')!.params, 'light').params;
+  const pick = (hex: string, target: Parameters<typeof suggestParam>[2]) => suggestParam(hexToRgb(hex), ios, target);
+
+  it('disambiguates equal values by where the color is used', () => {
+    expect(pick('#ffffff', 'text').key).toBe('button_text_color');
+    expect(pick('#ffffff', 'fill').key).toBe('bg_color');
+    expect(pick('#007aff', 'text').key).toBe('accent_text_color');
+    expect(pick('#007aff', 'fill').key).toBe('button_color');
+    expect(pick('#8e8e93', 'text').key).toBe('hint_color');
+    expect(pick('#c8c7cc', 'stroke').key).toBe('section_separator_color');
+  });
+
+  it('grades match quality', () => {
+    expect(pick('#000000', 'text')).toMatchObject({ key: 'text_color', quality: 'exact' });
+    expect(pick('#0a0a0a', 'text')).toMatchObject({ key: 'text_color', quality: 'near' });
+    expect(pick('#9b30ff', 'fill').quality).toBe('weak');
   });
 });

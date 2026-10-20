@@ -14,13 +14,14 @@ Full spec: [docs/SPEC.md](docs/SPEC.md).
 
 | Block | State |
 |---|---|
-| `/core`: colors, contrast, matching, presets, snippet | ✅ with tests |
+| `/core`: colors (CIEDE2000, WCAG), matching, presets, snippet | ✅ with tests |
 | A1 `Telegram Theme` collection | ✅ |
 | A2 Apply theme to selection | ✅ (platform switch waits for components) |
 | Sniffer page | ✅ |
 | A3 Theme matrix | ✅ |
 | B1–B5 System components | ⏳ |
-| C1–C2 Audits | ⏳ |
+| C1 Unbound colors: scan, suggest, bind, exceptions | ✅ |
+| C2 Contrast across themes | ⏳ |
 | D Handoff UI | ⏳ (`generateSnippet` is ready in core) |
 
 ## Develop

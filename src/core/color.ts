@@ -1,4 +1,4 @@
-// Pure color math: hex parsing, Figma RGB conversion, OKLab distance, WCAG 2.1 contrast.
+// Pure color math: hex parsing, Figma RGB conversion, CIEDE2000 distance, WCAG 2.1 contrast.
 
 /** Channels in 0..1, same shape as Figma's RGB / RGBA. */
 export interface RGB {
@@ -93,30 +93,81 @@ export function isDark(bg: RGB): boolean {
   return preferredOnColor(bg) === 'light';
 }
 
-export interface OKLab {
+export interface Lab {
   L: number;
   a: number;
   b: number;
 }
 
-/** sRGB -> OKLab (Björn Ottosson, 2020). */
-export function rgbToOklab({ r, g, b }: RGB): OKLab {
+/** sRGB -> CIELAB (D65). */
+export function rgbToLab({ r, g, b }: RGB): Lab {
   const lr = toLinear(r);
   const lg = toLinear(g);
   const lb = toLinear(b);
-  const l = Math.cbrt(0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb);
-  const m = Math.cbrt(0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb);
-  const s = Math.cbrt(0.0883024619 * lr + 0.2817188376 * lg + 0.6299787005 * lb);
-  return {
-    L: 0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s,
-    a: 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s,
-    b: 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s,
-  };
+  const x = (0.4124564 * lr + 0.3575761 * lg + 0.1804375 * lb) / 0.95047;
+  const y = 0.2126729 * lr + 0.7151522 * lg + 0.072175 * lb;
+  const z = (0.0193339 * lr + 0.119192 * lg + 0.9503041 * lb) / 1.08883;
+  const f = (t: number) => (t > 216 / 24389 ? Math.cbrt(t) : ((24389 / 27) * t + 16) / 116);
+  const fx = f(x);
+  const fy = f(y);
+  const fz = f(z);
+  return { L: 116 * fy - 16, a: 500 * (fx - fy), b: 200 * (fy - fz) };
 }
 
-/** Euclidean distance in OKLab. ~0.02 is barely noticeable, > 0.1 is clearly different. */
-export function deltaEOK(x: RGB, y: RGB): number {
-  const a = rgbToOklab(x);
-  const b = rgbToOklab(y);
-  return Math.hypot(a.L - b.L, a.a - b.a, a.b - b.b);
+const rad = (deg: number) => (deg * Math.PI) / 180;
+const deg = (r: number) => {
+  const d = (r * 180) / Math.PI;
+  return d < 0 ? d + 360 : d;
+};
+
+/** CIEDE2000 color difference (Sharma, Wu, Dalal 2005). ~1 is a just-noticeable difference. */
+export function deltaE2000Lab(x: Lab, y: Lab): number {
+  const C1 = Math.hypot(x.a, x.b);
+  const C2 = Math.hypot(y.a, y.b);
+  const Cb7 = Math.pow((C1 + C2) / 2, 7);
+  const G = 0.5 * (1 - Math.sqrt(Cb7 / (Cb7 + Math.pow(25, 7))));
+  const a1 = (1 + G) * x.a;
+  const a2 = (1 + G) * y.a;
+  const C1p = Math.hypot(a1, x.b);
+  const C2p = Math.hypot(a2, y.b);
+  const h1 = C1p === 0 ? 0 : deg(Math.atan2(x.b, a1));
+  const h2 = C2p === 0 ? 0 : deg(Math.atan2(y.b, a2));
+
+  const dL = y.L - x.L;
+  const dC = C2p - C1p;
+  let dh = 0;
+  if (C1p * C2p !== 0) {
+    dh = h2 - h1;
+    if (dh > 180) dh -= 360;
+    else if (dh < -180) dh += 360;
+  }
+  const dH = 2 * Math.sqrt(C1p * C2p) * Math.sin(rad(dh / 2));
+
+  const Lb = (x.L + y.L) / 2;
+  const Cbp = (C1p + C2p) / 2;
+  let hb = h1 + h2;
+  if (C1p * C2p !== 0) {
+    if (Math.abs(h1 - h2) <= 180) hb = (h1 + h2) / 2;
+    else hb = h1 + h2 < 360 ? (h1 + h2 + 360) / 2 : (h1 + h2 - 360) / 2;
+  }
+  const T =
+    1 -
+    0.17 * Math.cos(rad(hb - 30)) +
+    0.24 * Math.cos(rad(2 * hb)) +
+    0.32 * Math.cos(rad(3 * hb + 6)) -
+    0.2 * Math.cos(rad(4 * hb - 63));
+  const dTheta = 30 * Math.exp(-Math.pow((hb - 275) / 25, 2));
+  const Cbp7 = Math.pow(Cbp, 7);
+  const Rc = 2 * Math.sqrt(Cbp7 / (Cbp7 + Math.pow(25, 7)));
+  const Sl = 1 + (0.015 * Math.pow(Lb - 50, 2)) / Math.sqrt(20 + Math.pow(Lb - 50, 2));
+  const Sc = 1 + 0.045 * Cbp;
+  const Sh = 1 + 0.015 * Cbp * T;
+  const Rt = -Math.sin(rad(2 * dTheta)) * Rc;
+  return Math.sqrt(
+    Math.pow(dL / Sl, 2) + Math.pow(dC / Sc, 2) + Math.pow(dH / Sh, 2) + Rt * (dC / Sc) * (dH / Sh),
+  );
+}
+
+export function deltaE2000(x: RGB, y: RGB): number {
+  return deltaE2000Lab(rgbToLab(x), rgbToLab(y));
 }

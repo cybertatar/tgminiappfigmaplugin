@@ -182,3 +182,111 @@ code {
   background: var(--figma-color-bg-disabled);
   color: var(--figma-color-text-ondisabled);
 }
+
+.ref {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 8px;
+}
+select {
+  font: inherit;
+  color: inherit;
+  background: var(--figma-color-bg);
+  border: 1px solid var(--figma-color-border);
+  border-radius: 4px;
+  padding: 2px 4px;
+  min-width: 0;
+}
+.groups {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+.group {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--figma-color-border);
+}
+.group > input {
+  margin: 4px 0 0;
+}
+.group-body {
+  flex: 1;
+  min-width: 0;
+}
+.group-line {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.group-line select {
+  flex: 1;
+}
+.group-line + .group-line {
+  margin-top: 2px;
+}
+.names {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.swatch-sm {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 1px var(--figma-color-border);
+}
+.arrow {
+  color: var(--figma-color-text-tertiary);
+}
+.q {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 0 4px;
+  border-radius: 3px;
+}
+.q-exact {
+  color: var(--figma-color-text-success);
+  background: var(--figma-color-bg-success-tertiary);
+}
+.q-near {
+  color: var(--figma-color-text-secondary);
+  background: var(--figma-color-bg-secondary);
+}
+.q-weak {
+  color: var(--figma-color-text-warning);
+  background: var(--figma-color-bg-warning-tertiary);
+}
+.link {
+  border: 0;
+  background: none;
+  padding: 0 0 0 6px;
+  color: var(--figma-color-text-brand);
+}
+.confirm {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.confirm span {
+  flex: 1;
+}
+.ok {
+  color: var(--figma-color-text-success);
+}
+.stats {
+  margin-top: 12px;
+  display: grid;
+  gap: 2px;
+}
+.warn.row {
+  margin: 8px 0 0;
+}
