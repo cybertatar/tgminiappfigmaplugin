@@ -75,7 +75,7 @@ function buildControls(
   row.primaryAxisSizingMode = 'FIXED';
   row.counterAxisSizingMode = 'FIXED';
   row.paddingLeft = row.paddingRight = spec.sideInset;
-  row.paddingTop = 0;
+  row.paddingTop = spec.controlsMargin;
   row.fills = [];
   row.clipsContent = false;
   row.x = 0;

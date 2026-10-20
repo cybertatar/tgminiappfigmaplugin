@@ -24,6 +24,8 @@ export interface FullscreenSpec {
   safeBottom: number;
   /** contentSafeAreaInset.top: the band the controls occupy below the safe area. */
   controlsRow: number;
+  /** Gap above (and below) the pills inside that band. */
+  controlsMargin: number;
   sideInset: number;
   left: PillSpec & { iconSize: number; iconWeight: number; fontSize: number };
   right: PillSpec & { chevronSize: number; dotsSize: number };
@@ -37,8 +39,9 @@ function screen(p: Platform) {
 export const FULLSCREEN: Partial<Record<Platform, FullscreenSpec>> = {
   ios: {
     ...screen('ios'),
-    // Not measurable from screenshots; check with the sniffer (contentSafeAreaInset.top).
-    controlsRow: 42,
+    // WebAppController: controls at statusBarHeight + 8, contentSafeAreaInset.top = 30 + 8 * 2.
+    controlsRow: 46,
+    controlsMargin: 8,
     sideInset: 16,
     left: { height: 30, paddingLeft: 9, paddingRight: 12, gap: 10, iconSize: 11.5, iconWeight: 1.8, fontSize: 13 },
     right: { height: 30, paddingLeft: 9, paddingRight: 8, gap: 20, chevronSize: 15, dotsSize: 20 },
@@ -46,6 +49,7 @@ export const FULLSCREEN: Partial<Record<Platform, FullscreenSpec>> = {
   android: {
     ...screen('android'),
     controlsRow: 48,
+    controlsMargin: 8,
     sideInset: 16,
     left: { height: 32, paddingLeft: 10, paddingRight: 12, gap: 10, iconSize: 12, iconWeight: 2, fontSize: 14 },
     right: { height: 32, paddingLeft: 10, paddingRight: 9, gap: 20, chevronSize: 15, dotsSize: 20 },

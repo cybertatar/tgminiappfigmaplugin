@@ -1,8 +1,9 @@
 // System insets per platform — one place for the header inset, bottom bar and fullscreen layouts.
 // At runtime Telegram reports these as safeAreaInset (the sniffer page logs real values).
 //
-// iOS: iPhone 17 (402x874pt): status bar / Dynamic Island 62pt (measured on client screenshots),
-//   home indicator 34pt.
+// iOS: iPhone 17 (402x874pt). Telegram reports safeAreaInset.top = the status bar height (54pt),
+//   not the 62pt UIKit safe area (WebAppController customInsets.top = layout.statusBarHeight);
+//   fullscreen pills sit at 54 + 8 = 62pt, matching client screenshots. Home indicator 34pt.
 // Android: Figma's "Android Compact" frame (412x917dp).
 //   Status bar: AOSP SystemBarUtils.getStatusBarHeight = max(cutout top inset, 24dp), so on phones
 //   with a camera hole it equals the cutout. Pixel 10 Pro measures 156px at density 3.0 = 52dp.
@@ -28,7 +29,7 @@ export const DEVICE: Record<Platform, DeviceSpec> = {
     label: 'iPhone 17',
     width: 402,
     height: 874,
-    safeTop: 62,
+    safeTop: 54,
     safeBottom: 34,
     handle: { width: 134, height: 5, bottomOffset: 8 },
   },
