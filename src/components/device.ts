@@ -1,9 +1,13 @@
-// System insets per platform — one place for the status bar, bottom bar and fullscreen layouts.
+// System insets per platform — one place for the header inset, bottom bar and fullscreen layouts.
 // At runtime Telegram reports these as safeAreaInset (the sniffer page logs real values).
-// iOS: iPhone 17 (402x874pt): status bar / Dynamic Island 62pt, home indicator 34pt.
-// Android: DRAFT for a typical Pixel-size phone (412x915dp) with gesture navigation:
-//   Material status bar 24dp, gesture bar 24dp with a handle. Devices with a tall cutout report
-//   a taller status bar; 3-button navigation is 48dp.
+//
+// iOS: iPhone 17 (402x874pt): status bar / Dynamic Island 62pt (measured on client screenshots),
+//   home indicator 34pt.
+// Android: Figma's "Android Compact" frame (412x917dp).
+//   Status bar: AOSP SystemBarUtils.getStatusBarHeight = max(cutout top inset, 24dp), so on phones
+//   with a camera hole it equals the cutout. Pixel 10 Pro measures 156px at density 3.0 = 52dp.
+//   Navigation: AOSP NavigationBarModeGesturalOverlay sets 24dp for gesture navigation;
+//   3-button navigation is 48dp (core/res dimens navigation_bar_height).
 // Desktop: a window, no system insets.
 import type { Platform } from '../core';
 
@@ -29,10 +33,10 @@ export const DEVICE: Record<Platform, DeviceSpec> = {
     handle: { width: 134, height: 5, bottomOffset: 8 },
   },
   android: {
-    label: 'Android phone, gesture navigation (draft)',
+    label: 'Android Compact, gesture navigation',
     width: 412,
-    height: 915,
-    safeTop: 24,
+    height: 917,
+    safeTop: 52,
     safeBottom: 24,
     handle: { width: 108, height: 4, bottomOffset: 10 },
   },
