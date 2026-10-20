@@ -88,37 +88,91 @@ function buildControls(
   c.insertChild(1, r);
 }
 
-/** Guide only: tinted system safe area (red) and content safe area (green). */
+/**
+ * Guide only, drawn like the official docs illustration: outlined boxes for the safe area (pink)
+ * and the content safe area (green) with a tag centered at the top, where no system controls sit.
+ * Areas outside the safe area get a faint tint. No fills inside, so translucent controls stay readable.
+ */
 function buildSafeArea(c: ComponentNode, ctx: BuildContext, platform: Platform) {
   const spec = FULLSCREEN[platform]!;
+  const PINK = '#e5487b';
+  const GREEN = '#28b446';
   c.layoutMode = 'NONE';
   c.resize(spec.width, spec.screenHeight);
   c.fills = [];
   c.clipsContent = false;
-  c.description = 'Guide for fullscreen layouts: --tg-safe-area-inset-* (red) and --tg-content-safe-area-inset-* (green). Not for export.';
+  c.description =
+    'Guide for fullscreen layouts: --tg-safe-area-inset-* (pink) and --tg-content-safe-area-inset-* (green). Not for export.';
 
-  const zones: [string, number, number, string, ConstraintType][] = [
-    [`safe-area-inset-top · ${spec.safeTop}`, 0, spec.safeTop, '#ff3b30', 'MIN'],
-    [`content-safe-area-inset-top · ${spec.controlsRow}`, spec.safeTop, spec.controlsRow, '#34c759', 'MIN'],
-    [`safe-area-inset-bottom · ${spec.safeBottom}`, spec.screenHeight - spec.safeBottom, spec.safeBottom, '#ff3b30', 'MAX'],
+  const bottom = spec.screenHeight - spec.safeBottom;
+  const zones: {
+    name: string;
+    y: number;
+    h: number;
+    color: string;
+    tag?: string;
+    outline: boolean;
+    vertical: ConstraintType;
+  }[] = [
+    { name: 'System top', y: 0, h: spec.safeTop, color: PINK, outline: false, vertical: 'MIN' },
+    { name: 'System bottom', y: bottom, h: spec.safeBottom, color: PINK, outline: false, vertical: 'MAX' },
+    {
+      name: 'Safe area',
+      y: spec.safeTop,
+      h: bottom - spec.safeTop,
+      color: PINK,
+      tag: `safe-area · ${spec.safeTop} / ${spec.safeBottom}`,
+      outline: true,
+      vertical: 'STRETCH',
+    },
+    {
+      name: 'Content safe area',
+      y: spec.safeTop + spec.controlsRow,
+      h: bottom - spec.safeTop - spec.controlsRow,
+      color: GREEN,
+      tag: `content-safe-area · ${spec.controlsRow}`,
+      outline: true,
+      vertical: 'STRETCH',
+    },
   ];
-  const keep = new Set(zones.map((z) => z[0]));
+  const keep = new Set(zones.map((z) => z.name));
   for (const child of [...c.children]) if (!keep.has(child.name)) child.remove();
-  for (const [name, y, h, color, vertical] of zones) {
-    const zone = ensureChild(c, name, 'FRAME', () => figma.createFrame());
+
+  for (const z of zones) {
+    const zone = ensureChild(c, z.name, 'FRAME', () => figma.createFrame());
     zone.layoutMode = 'NONE';
-    zone.resize(spec.width, h);
+    zone.resize(spec.width, z.h);
     zone.x = 0;
-    zone.y = y;
-    zone.fills = [rawPaint(color, 0.14)];
-    zone.constraints = { horizontal: 'STRETCH', vertical };
-    const t = ensureChild(zone, 'Label', 'TEXT', () => figma.createText());
+    zone.y = z.y;
+    zone.clipsContent = false;
+    zone.fills = z.outline ? [] : [rawPaint(z.color, 0.08)];
+    zone.strokes = z.outline ? [rawPaint(z.color)] : [];
+    zone.strokeWeight = 1;
+    zone.strokeAlign = 'INSIDE';
+    zone.constraints = { horizontal: 'STRETCH', vertical: z.vertical };
+    for (const child of [...zone.children]) if (child.name !== 'Tag') child.remove();
+    if (!z.tag) {
+      zone.findChild((n) => n.name === 'Tag')?.remove();
+      continue;
+    }
+    // Tag: colored chip with white text, centered between the floating controls.
+    const tag = ensureChild(zone, 'Tag', 'FRAME', () => figma.createFrame());
+    tag.layoutMode = 'HORIZONTAL';
+    tag.primaryAxisSizingMode = 'AUTO';
+    tag.counterAxisSizingMode = 'AUTO';
+    tag.paddingLeft = tag.paddingRight = 5;
+    tag.paddingTop = tag.paddingBottom = 2;
+    tag.cornerRadius = 2;
+    tag.fills = [rawPaint(z.color)];
+    const t = ensureChild(tag, 'Label', 'TEXT', () => figma.createText());
     t.fontName = ctx.fonts[platform].semibold;
-    t.characters = name;
+    t.characters = z.tag;
     t.fontSize = 10;
-    t.fills = [rawPaint(color)];
-    t.x = 6;
-    t.y = Math.max(0, (h - t.height) / 2);
+    t.fills = [rawPaint('#ffffff')];
+    tag.x = Math.round((spec.width - tag.width) / 2);
+    // Pink tag sits in the controls row (like the docs); green just below it.
+    tag.y = Math.round(z.name === 'Safe area' ? (spec.controlsRow - tag.height) / 2 : 8);
+    tag.constraints = { horizontal: 'CENTER', vertical: 'MIN' };
   }
 }
 
