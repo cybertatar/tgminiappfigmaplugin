@@ -1,6 +1,6 @@
 {
   "name": "Native Kit for Telegram Mini Apps",
-  "id": "tg-native-kit-dev",
+  "id": "1694455897646802978",
   "api": "1.0.0",
   "main": "dist/code.js",
   "ui": "dist/ui.html",
