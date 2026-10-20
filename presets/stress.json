@@ -1,0 +1,11 @@
+{
+  "id": "stress", "name": "Stress Test", "platform": "android", "scheme": "dark",
+  "source": "synthetic: custom-theme worst case — saturated purple, light button with light text, low-contrast hints",
+  "params": {
+    "bg_color": "#2b0f4a", "secondary_bg_color": "#4a1a7a", "header_bg_color": "#ff4fa3",
+    "bottom_bar_bg_color": "#3a1466", "section_bg_color": "#5c2a91", "section_separator_color": "#7a45b0",
+    "text_color": "#f2e6ff", "accent_text_color": "#ffd23f", "section_header_text_color": "#c99bff",
+    "subtitle_text_color": "#9c7cc4", "destructive_text_color": "#ff6b6b", "hint_color": "#7f5fa8",
+    "link_color": "#4fd1ff", "button_color": "#ffe066", "button_text_color": "#ffffff"
+  }
+}

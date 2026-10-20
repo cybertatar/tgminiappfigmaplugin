@@ -1,0 +1,153 @@
+/* Uses Figma's theme tokens (showUI themeColors: true) so the UI follows light/dark Figma. */
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font: 11px/16px Inter, system-ui, sans-serif;
+  color: var(--figma-color-text);
+  background: var(--figma-color-bg);
+}
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+button:disabled {
+  cursor: default;
+}
+code {
+  font-family: ui-monospace, monospace;
+}
+
+.tabs {
+  display: flex;
+  gap: 2px;
+  padding: 8px;
+  border-bottom: 1px solid var(--figma-color-border);
+}
+.tab-btn {
+  border: 0;
+  background: none;
+  padding: 4px 8px;
+  border-radius: 5px;
+  color: var(--figma-color-text-secondary);
+  font-weight: 500;
+}
+.tab-btn.on {
+  color: var(--figma-color-text);
+  background: var(--figma-color-bg-secondary);
+}
+
+.tab,
+.pad {
+  padding: 12px;
+}
+.card {
+  border: 1px solid var(--figma-color-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.title {
+  font-weight: 600;
+  font-size: 12px;
+}
+.muted {
+  color: var(--figma-color-text-secondary);
+}
+.small {
+  font-size: 10px;
+  line-height: 14px;
+}
+
+.primary,
+.secondary {
+  border-radius: 5px;
+  padding: 5px 12px;
+  font-weight: 500;
+}
+.primary {
+  border: 0;
+  background: var(--figma-color-bg-brand);
+  color: var(--figma-color-text-onbrand);
+}
+.secondary {
+  border: 1px solid var(--figma-color-border);
+  background: none;
+}
+
+.section-label {
+  margin: 16px 0 6px;
+  font-weight: 600;
+}
+.presets {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+.preset {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: none;
+  text-align: left;
+}
+.preset:hover:not(:disabled) {
+  background: var(--figma-color-bg-hover);
+}
+.preset.active {
+  border-color: var(--figma-color-border-selected);
+  background: var(--figma-color-bg-selected);
+}
+.preset:disabled .swatches {
+  opacity: 0.5;
+}
+.preset-name {
+  flex: 1;
+}
+.swatches {
+  display: inline-flex;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px var(--figma-color-border);
+}
+.swatch {
+  width: 12px;
+  height: 20px;
+}
+.badge {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 1px 5px;
+  border-radius: 4px;
+  color: var(--figma-color-text-warning);
+  background: var(--figma-color-bg-warning-tertiary);
+}
+
+.warn,
+.error {
+  margin-top: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+}
+.warn {
+  background: var(--figma-color-bg-warning-tertiary);
+}
+.error {
+  margin: 8px 12px 0;
+  background: var(--figma-color-bg-danger-tertiary);
+  color: var(--figma-color-text-danger);
+}

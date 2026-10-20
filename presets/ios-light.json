@@ -1,0 +1,11 @@
+{
+  "id": "ios-light", "name": "iOS Light", "platform": "ios", "scheme": "light", "draft": true,
+  "source": "approximation from memory of the native palette — capture with sniffer/ and replace",
+  "params": {
+    "bg_color": "#ffffff", "secondary_bg_color": "#efeff4", "header_bg_color": "#f8f8f8",
+    "bottom_bar_bg_color": "#f2f2f2", "section_bg_color": "#ffffff", "section_separator_color": "#c8c7cc",
+    "text_color": "#000000", "accent_text_color": "#007aff", "section_header_text_color": "#6d6d72",
+    "subtitle_text_color": "#8e8e93", "destructive_text_color": "#ff3b30", "hint_color": "#8e8e93",
+    "link_color": "#007aff", "button_color": "#007aff", "button_text_color": "#ffffff"
+  }
+}
