@@ -9,6 +9,7 @@ import {
   isLargeText,
   layoutMatrix,
   suggestParam,
+  readableOn,
   normalizeHex,
   parsePresetJson,
   preferredOnColor,
@@ -214,5 +215,13 @@ describe('suggestParam', () => {
     expect(pick('#000000', 'text')).toMatchObject({ key: 'text_color', quality: 'exact' });
     expect(pick('#0a0a0a', 'text')).toMatchObject({ key: 'text_color', quality: 'near' });
     expect(pick('#9b30ff', 'fill').quality).toBe('weak');
+  });
+});
+
+describe('readableOn', () => {
+  it('keeps the theme color when it reads, otherwise picks white or black', () => {
+    expect(readableOn('#ffffff', '#222222', 4.5)).toEqual({ hex: '#222222', alpha: 1 });
+    expect(readableOn('#527da3', '#222222', 4.5)).toEqual({ hex: '#ffffff', alpha: 1 });
+    expect(readableOn('#ffe066', '#ffffff', 3, 0.7)).toEqual({ hex: '#000000', alpha: 0.7 });
   });
 });

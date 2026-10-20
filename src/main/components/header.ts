@@ -13,7 +13,7 @@ import {
   type HeaderLeft,
   type HeaderState,
 } from '../../components/header';
-import { PLATFORMS, type Platform } from '../../core';
+import { PLATFORMS, type Platform, type SystemColorKey, type ThemeParamKey } from '../../core';
 import {
   boundPaint,
   ensureBooleanProperty,
@@ -23,6 +23,7 @@ import {
   ensureTextProperty,
   rawPaint,
   removeChild,
+  systemPaint,
   type BuildContext,
   type SetReport,
 } from './kit';
@@ -39,10 +40,29 @@ interface Paints {
   buttons: SolidPaint;
 }
 
+// Over header_bg_color the content adapts to contrast (system/header_* variables).
+const OVER_HEADER: Partial<Record<ThemeParamKey, SystemColorKey>> = {
+  text_color: 'header_title',
+  accent_text_color: 'header_accent',
+  hint_color: 'header_hint',
+};
+
 function paints(ctx: BuildContext, platform: Platform, color: HeaderColor): Paints {
   const param = HEADER_COLOR_PARAM[color];
+  const fg = HEADER[platform].fg;
+  if (color === 'Header') {
+    const pick = (key: ThemeParamKey) => {
+      const sys = OVER_HEADER[key];
+      return sys ? systemPaint(ctx, sys) : boundPaint(ctx, key);
+    };
+    return {
+      bg: boundPaint(ctx, 'header_bg_color'),
+      title: pick(fg.title),
+      subtitle: pick(fg.subtitle),
+      buttons: pick(fg.buttons),
+    };
+  }
   if (param) {
-    const fg = HEADER[platform].fg;
     return {
       bg: boundPaint(ctx, param),
       title: boundPaint(ctx, fg.title),
