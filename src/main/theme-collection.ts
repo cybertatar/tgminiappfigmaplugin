@@ -190,7 +190,7 @@ export async function systemVariables(collection: VariableCollection): Promise<M
   const map = new Map<SystemColorKey, Variable>();
   for (const v of vars) {
     if (v.variableCollectionId !== collection.id) continue;
-    const key = v.getPluginData(KEY_SYSTEM) as SystemColorKey;
+    const key = (v.getPluginData(KEY_SYSTEM) || (v.name.startsWith('system/') ? v.name.slice(7) : '')) as SystemColorKey;
     if (key) map.set(key, v);
   }
   return map;

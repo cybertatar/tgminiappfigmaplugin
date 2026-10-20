@@ -1,5 +1,5 @@
 // C1: finds solid paints not bound to a variable and binds them to Telegram Theme variables.
-import { hexToRgb, rgbToHex, suggestParam, type PaintTarget, type ResolvedThemeParams, type ThemeParamKey } from '../core';
+import { hexToRgb, isThemeParamKey, rgbToHex, suggestParam, type PaintTarget, type ResolvedThemeParams, type ThemeParamKey } from '../core';
 import type { ColorGroup, ScanStats } from '../shared/messages';
 import { KEY_COMPONENT, KEY_IGNORE } from './keys';
 import { KEY_PARAM } from './theme-collection';
@@ -147,8 +147,9 @@ export async function themeVariables(collection: VariableCollection): Promise<Ma
   const map = new Map<ThemeParamKey, Variable>();
   for (const v of vars) {
     if (v.variableCollectionId !== collection.id) continue;
-    const key = v.getPluginData(KEY_PARAM) as ThemeParamKey;
-    if (key) map.set(key, v);
+    // Fall back to the name when plugin data is gone (plugin ID changed).
+    const key = (v.getPluginData(KEY_PARAM) || (v.name.startsWith('tg/') ? v.name.slice(3) : '')) as ThemeParamKey;
+    if (key && isThemeParamKey(key)) map.set(key, v);
   }
   return map;
 }
