@@ -1,5 +1,16 @@
 // A1/A2: the "Telegram Theme" variable collection and applying its modes to nodes.
-import { cssVarRef, hexToRgba, resolveParams, THEME_PARAMS, variableName, type Preset } from '../core';
+import {
+  cssVarRef,
+  hexToRgba,
+  resolveParams,
+  SYSTEM_COLOR_KEYS,
+  SYSTEM_COLORS,
+  systemVariableName,
+  THEME_PARAMS,
+  variableName,
+  type Preset,
+  type SystemColorKey,
+} from '../core';
 import type { ModeInfo, SyncReport } from '../shared/messages';
 
 export const COLLECTION_NAME = 'Telegram Theme';
@@ -8,6 +19,7 @@ export const COLLECTION_NAME = 'Telegram Theme';
 const KEY_COLLECTION = 'tgKit';
 const KEY_MODES = 'tgModes'; // JSON: presetId -> modeId
 export const KEY_PARAM = 'tgParam';
+export const KEY_SYSTEM = 'tgSystem';
 export const KEY_PRESET = 'tgPreset';
 
 export async function findCollection(): Promise<VariableCollection | null> {
@@ -101,6 +113,25 @@ export async function syncCollection(presets: readonly Preset[]): Promise<SyncRe
       variable.setValueForMode(modeId, hexToRgba(resolved.get(preset.id)![param.key]));
     }
   }
+
+  for (const key of SYSTEM_COLOR_KEYS) {
+    const info = SYSTEM_COLORS[key];
+    let variable =
+      locals.find((v) => v.getPluginData(KEY_SYSTEM) === key) ??
+      locals.find((v) => v.name === systemVariableName(key));
+    if (!variable) {
+      variable = figma.variables.createVariable(systemVariableName(key), collection, 'COLOR');
+      report.createdVariables++;
+    }
+    variable.setPluginData(KEY_SYSTEM, key);
+    variable.description = info.description;
+    for (const preset of presets) {
+      const modeId = modeMap[preset.id];
+      if (!modeId) continue;
+      const value = info.values[preset.scheme];
+      variable.setValueForMode(modeId, hexToRgba(value.hex, value.alpha));
+    }
+  }
   return report;
 }
 
@@ -147,4 +178,15 @@ export function presetOf(nodes: readonly SceneNode[], collection: VariableCollec
     result = id;
   }
   return result;
+}
+
+export async function systemVariables(collection: VariableCollection): Promise<Map<SystemColorKey, Variable>> {
+  const vars = await figma.variables.getLocalVariablesAsync('COLOR');
+  const map = new Map<SystemColorKey, Variable>();
+  for (const v of vars) {
+    if (v.variableCollectionId !== collection.id) continue;
+    const key = v.getPluginData(KEY_SYSTEM) as SystemColorKey;
+    if (key) map.set(key, v);
+  }
+  return map;
 }

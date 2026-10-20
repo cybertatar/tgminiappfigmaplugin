@@ -1,7 +1,7 @@
 // B UI: build the system component kit and insert instances into screens.
 import { useState } from 'preact/hooks';
 import { BAR_LAYOUTS, barArrangement, type BarLayout } from '../components/bottom-bar';
-import { FULLSCREEN_LEFT, FULLSCREEN_TONES, type FullscreenLeft, type FullscreenTone } from '../components/fullscreen';
+import { FULLSCREEN_LEFT, type FullscreenLeft } from '../components/fullscreen';
 import { HEADER_COLORS, HEADER_LEFT, type HeaderColor, type HeaderLeft } from '../components/header';
 import type { ComponentsReport, InsertRequest, PluginState } from '../shared/messages';
 import { send } from './bridge';
@@ -59,8 +59,6 @@ export function ComponentsTab({ state, report }: { state: PluginState; report: C
   const [headerLeft, setHeaderLeft] = useState<HeaderLeft>('Close');
   const [headerColor, setHeaderColor] = useState<HeaderColor>('Header');
   const [fsLeft, setFsLeft] = useState<FullscreenLeft>('Close');
-  const [fsTone, setFsTone] = useState<FullscreenTone>('Dark');
-  const [guide, setGuide] = useState(true);
   const target = state.insertTarget;
 
   const request: InsertRequest =
@@ -68,7 +66,7 @@ export function ComponentsTab({ state, report }: { state: PluginState; report: C
       ? { kind, left: headerLeft, color: headerColor }
       : kind === 'bottom-bar'
         ? { kind, layout }
-        : { kind, left: fsLeft, tone: fsTone, guide };
+        : { kind, left: fsLeft };
 
   return (
     <div class="tab">
@@ -147,14 +145,9 @@ export function ComponentsTab({ state, report }: { state: PluginState; report: C
               <span class="muted">Left</span>
               <Segmented options={FULLSCREEN_LEFT} value={fsLeft} onChange={setFsLeft} />
             </label>
-            <label class="opt">
-              <span class="muted">Controls</span>
-              <Segmented options={FULLSCREEN_TONES} value={fsTone} onChange={setFsTone} />
-            </label>
-            <label class="check">
-              <input type="checkbox" checked={guide} onChange={(e) => setGuide(e.currentTarget.checked)} />
-              Add safe area guide
-            </label>
+            <p class="muted small">
+              Covers the whole screen. Turn on “Safe area guide” on the instance to check insets.
+            </p>
           </div>
         )}
 

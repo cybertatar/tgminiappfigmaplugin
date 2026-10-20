@@ -2,12 +2,12 @@
 import { PLATFORM_LABEL } from '../../components/bottom-bar';
 import { FULLSCREEN } from '../../components/fullscreen';
 import { FALLBACK_FONTS, PLATFORM_FONTS, pickFont, type FontWeight } from '../../components/fonts';
-import { PLATFORMS, PRESETS, type Platform } from '../../core';
+import { PLATFORMS, PRESETS, SYSTEM_COLOR_KEYS, type Platform } from '../../core';
 import type { ComponentsReport, InsertRequest } from '../../shared/messages';
 import { themeVariables } from '../audit';
-import { findCollection, KEY_PRESET, syncCollection } from '../theme-collection';
+import { findCollection, KEY_PRESET, syncCollection, systemVariables } from '../theme-collection';
 import { buildBottomComponents, TAG_BAR, TAG_BUTTON } from './bottom';
-import { buildFullscreenComponents, TAG_FULLSCREEN, TAG_SAFE_AREA } from './fullscreen';
+import { buildFullscreenComponents, TAG_FULLSCREEN } from './fullscreen';
 import { buildHeaderComponents, TAG_HEADER } from './header';
 import { ensurePage, findPage, findSet, KEY_COMPONENT, variantName, type BuildContext } from './kit';
 
@@ -35,9 +35,10 @@ async function resolveFonts(): Promise<{ fonts: BuildContext['fonts']; warnings:
   return { fonts, warnings };
 }
 
+/** Kit components need every theme and system variable: sync whenever one is missing. */
 async function ensureCollection(): Promise<VariableCollection> {
   const existing = await findCollection();
-  if (existing) return existing;
+  if (existing && (await systemVariables(existing)).size === SYSTEM_COLOR_KEYS.length) return existing;
   await syncCollection(PRESETS);
   return (await findCollection())!;
 }
@@ -47,7 +48,7 @@ export async function buildComponents(): Promise<ComponentsReport> {
   const vars = await themeVariables(collection);
   const { fonts, warnings } = await resolveFonts();
   const page = await ensurePage();
-  const ctx: BuildContext = { vars, fonts };
+  const ctx: BuildContext = { vars, fonts, system: await systemVariables(collection) };
   const reports = [
     await buildBottomComponents(page, ctx),
     await buildHeaderComponents(page, ctx),
@@ -69,7 +70,7 @@ export async function buildComponents(): Promise<ComponentsReport> {
   };
 }
 
-const ALL_TAGS = [TAG_HEADER, TAG_BUTTON, TAG_BAR, TAG_FULLSCREEN, TAG_SAFE_AREA];
+const ALL_TAGS = [TAG_HEADER, TAG_BUTTON, TAG_BAR, TAG_FULLSCREEN];
 
 export async function componentsReady(): Promise<boolean> {
   const page = await findPage();
@@ -135,23 +136,10 @@ export async function insertKit(target: FrameNode | ComponentNode, req: InsertRe
       return [place(target, c, { y: 0, vertical: 'MIN' })];
     }
     case 'fullscreen': {
+      // Desktop has no fullscreen controls: fall back to iOS.
       const fsPlatform = FULLSCREEN[platform] ? platform : 'ios';
-      const spec = FULLSCREEN[fsPlatform]!;
-      const out: SceneNode[] = [];
-      if (req.guide) {
-        const g = place(target, await variant(TAG_SAFE_AREA, { Platform: PLATFORM_LABEL[fsPlatform] }), 'cover');
-        g.name = 'Safe area (guide)';
-        g.locked = true;
-        out.push(g);
-      }
-      const c = await variant(TAG_FULLSCREEN, {
-        Platform: PLATFORM_LABEL[fsPlatform],
-        Left: req.left,
-        Tone: req.tone,
-        State: 'Default',
-      });
-      out.unshift(place(target, c, { y: spec.safeTop, vertical: 'MIN' }));
-      return out;
+      const c = await variant(TAG_FULLSCREEN, { Platform: PLATFORM_LABEL[fsPlatform], Left: req.left, State: 'Default' });
+      return [place(target, c, 'cover')];
     }
   }
 }

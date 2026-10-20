@@ -16,6 +16,7 @@ import {
 import { PLATFORMS, type Platform } from '../../core';
 import {
   boundPaint,
+  ensureBooleanProperty,
   ensureChild,
   ensureIcon,
   ensureSet,
@@ -183,9 +184,3 @@ export async function buildHeaderComponents(page: PageNode, ctx: BuildContext): 
   return report;
 }
 
-function ensureBooleanProperty(set: ComponentSetNode, name: string, defaultValue: boolean): string {
-  const existing = Object.entries(set.componentPropertyDefinitions).find(
-    ([k, d]) => d.type === 'BOOLEAN' && k.split('#')[0] === name,
-  );
-  return existing ? existing[0] : set.addComponentProperty(name, 'BOOLEAN', defaultValue);
-}

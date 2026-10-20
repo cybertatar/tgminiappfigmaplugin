@@ -1,37 +1,41 @@
-// B2: "TG Fullscreen Controls" (floating system pills) and "TG Safe Area" guide.
+// B2: "TG Fullscreen" — screen-sized overlay with the floating system controls and an optional
+// safe area guide (boolean property "Safe area guide", off by default).
 import { PLATFORM_LABEL } from '../../components/bottom-bar';
 import {
   FULLSCREEN,
+  FULLSCREEN_LABEL,
   FULLSCREEN_LEFT,
   FULLSCREEN_PLATFORMS,
   FULLSCREEN_STATES,
-  FULLSCREEN_TONES,
-  TONE_COLORS,
   type FullscreenLeft,
+  type FullscreenSpec,
   type FullscreenState,
-  type FullscreenTone,
+  type PillSpec,
 } from '../../components/fullscreen';
 import { PRESSED_OPACITY } from '../../components/header';
 import type { Platform } from '../../core';
 import {
+  ensureBooleanProperty,
   ensureChild,
   ensureIcon,
   ensureSet,
-  ensureTextProperty,
+  findSet,
   rawPaint,
+  removeProperty,
+  systemPaint,
   type BuildContext,
   type SetReport,
 } from './kit';
 
 export const TAG_FULLSCREEN = 'fullscreen-controls';
-export const TAG_SAFE_AREA = 'safe-area';
+/** Separate guide set from earlier versions; the guide now lives inside TG Fullscreen. */
+const TAG_SAFE_AREA_OLD = 'safe-area';
 
 const NOTE =
-  'iOS measured from the official Telegram docs illustrations; Android is DRAFT. Sizes: src/components/fullscreen.ts.';
+  'iOS measured on iPhone 17 from client screenshots; Android is DRAFT. Pill colors follow the theme ' +
+  '(system/fullscreen_control_* variables). Sizes: src/components/fullscreen.ts.';
 
-function pill(parent: ComponentNode, name: string, platform: Platform, tone: FullscreenTone, pressed: boolean): FrameNode {
-  const spec = FULLSCREEN[platform]!.pill;
-  const colors = TONE_COLORS[tone];
+function pill(parent: FrameNode, name: string, spec: PillSpec, ctx: BuildContext, pressed: boolean): FrameNode {
   const f = ensureChild(parent, name, 'FRAME', () => figma.createFrame());
   f.layoutMode = 'HORIZONTAL';
   f.counterAxisAlignItems = 'CENTER';
@@ -43,86 +47,77 @@ function pill(parent: ComponentNode, name: string, platform: Platform, tone: Ful
   f.paddingRight = spec.paddingRight;
   f.itemSpacing = spec.gap;
   f.cornerRadius = spec.height / 2;
-  f.fills = [rawPaint(colors.pill, colors.pillOpacity)];
+  f.fills = [systemPaint(ctx, 'fullscreen_control_bg')];
   f.effects = [{ type: 'BACKGROUND_BLUR', blurType: 'NORMAL', radius: 20, visible: true }];
   f.opacity = pressed ? PRESSED_OPACITY + 0.2 : 1;
   return f;
 }
 
-function buildControls(
-  c: ComponentNode,
-  ctx: BuildContext,
-  platform: Platform,
-  left: FullscreenLeft,
-  tone: FullscreenTone,
-  state: FullscreenState,
-) {
+function buildControls(c: ComponentNode, ctx: BuildContext, platform: Platform, left: FullscreenLeft, state: FullscreenState) {
   const spec = FULLSCREEN[platform]!;
-  const fg = rawPaint(TONE_COLORS[tone].fg);
+  const fg = systemPaint(ctx, 'fullscreen_control_fg');
 
-  c.layoutMode = 'HORIZONTAL';
-  c.primaryAxisAlignItems = 'SPACE_BETWEEN';
-  c.counterAxisAlignItems = 'CENTER';
-  c.primaryAxisSizingMode = 'FIXED';
-  c.counterAxisSizingMode = 'FIXED';
-  c.resize(spec.width, spec.controlsRow);
-  c.paddingLeft = c.paddingRight = spec.sideInset;
-  c.fills = [];
-  c.description = NOTE;
+  const row = ensureChild(c, 'Controls', 'FRAME', () => figma.createFrame());
+  row.layoutMode = 'HORIZONTAL';
+  row.primaryAxisAlignItems = 'SPACE_BETWEEN';
+  row.counterAxisAlignItems = 'MIN';
+  row.resize(spec.width, spec.controlsRow);
+  row.primaryAxisSizingMode = 'FIXED';
+  row.counterAxisSizingMode = 'FIXED';
+  row.paddingLeft = row.paddingRight = spec.sideInset;
+  row.paddingTop = 0;
+  row.fills = [];
+  row.clipsContent = false;
+  row.x = 0;
+  row.y = spec.safeTop;
+  row.constraints = { horizontal: 'STRETCH', vertical: 'MIN' };
 
-  const l = pill(c, 'Left', platform, tone, state === 'Left pressed');
-  ensureIcon(l, 'Icon', left === 'Back' ? 'chevron-left' : 'close', spec.pill.iconSize, fg);
+  const l = pill(row, 'Left', spec.left, ctx, state === 'Left pressed');
+  ensureIcon(l, 'Icon', left === 'Back' ? 'chevron-left' : 'close', spec.left.iconSize, fg, {
+    inset: left === 'Back' ? 0.1 : 0.04,
+    weight: spec.left.iconWeight,
+  });
   const label = ensureChild(l, 'Label', 'TEXT', () => figma.createText());
   label.fontName = ctx.fonts[platform].semibold;
-  if (!label.characters) label.characters = left === 'Back' ? 'Back' : 'Mini App';
-  label.fontSize = spec.pill.fontSize;
+  label.characters = FULLSCREEN_LABEL[left];
+  label.fontSize = spec.left.fontSize;
   label.fills = [fg];
+  l.insertChild(0, l.findChild((n) => n.name === 'Icon')!);
 
-  const r = pill(c, 'Right', platform, tone, state === 'Right pressed');
-  r.itemSpacing = spec.rightGap;
-  r.paddingRight = spec.pill.paddingLeft;
-  ensureIcon(r, 'Collapse', 'chevron-down', spec.pill.iconSize + 2, fg);
-  ensureIcon(r, 'Menu', 'dots-h', spec.pill.iconSize + 2, fg);
+  const r = pill(row, 'Right', spec.right, ctx, state === 'Right pressed');
+  ensureIcon(r, 'Collapse', 'chevron-down', spec.right.chevronSize, fg, { inset: 0.02, weight: spec.left.iconWeight });
+  ensureIcon(r, 'Menu', 'dots-h', spec.right.dotsSize, fg, { inset: 0 });
+  r.insertChild(0, r.findChild((n) => n.name === 'Collapse')!);
 
-  c.insertChild(0, l);
-  c.insertChild(1, r);
+  row.insertChild(0, l);
+  row.insertChild(1, r);
 }
 
 /**
- * Guide only, drawn like the official docs illustration: outlined boxes for the safe area (pink)
- * and the content safe area (green) with a tag centered at the top, where no system controls sit.
- * Areas outside the safe area get a faint tint. No fills inside, so translucent controls stay readable.
+ * Drawn like the official docs illustration: outlined boxes for the safe area (pink) and the
+ * content safe area (green), a short tag centered between the controls, faint tint outside.
  */
-function buildSafeArea(c: ComponentNode, ctx: BuildContext, platform: Platform) {
-  const spec = FULLSCREEN[platform]!;
+function buildGuide(c: ComponentNode, ctx: BuildContext, platform: Platform, spec: FullscreenSpec): FrameNode {
   const PINK = '#e5487b';
   const GREEN = '#28b446';
-  c.layoutMode = 'NONE';
-  c.resize(spec.width, spec.screenHeight);
-  c.fills = [];
-  c.clipsContent = false;
-  c.description =
-    'Guide for fullscreen layouts: --tg-safe-area-inset-* (pink) and --tg-content-safe-area-inset-* (green). Not for export.';
+  const guide = ensureChild(c, 'Safe area guide', 'FRAME', () => figma.createFrame());
+  guide.layoutMode = 'NONE';
+  guide.resize(spec.width, spec.screenHeight);
+  guide.x = guide.y = 0;
+  guide.fills = [];
+  guide.clipsContent = false;
+  guide.constraints = { horizontal: 'STRETCH', vertical: 'STRETCH' };
 
   const bottom = spec.screenHeight - spec.safeBottom;
-  const zones: {
-    name: string;
-    y: number;
-    h: number;
-    color: string;
-    tag?: string;
-    outline: boolean;
-    vertical: ConstraintType;
-  }[] = [
-    { name: 'System top', y: 0, h: spec.safeTop, color: PINK, outline: false, vertical: 'MIN' },
-    { name: 'System bottom', y: bottom, h: spec.safeBottom, color: PINK, outline: false, vertical: 'MAX' },
+  const zones: { name: string; y: number; h: number; color: string; tag?: string; vertical: ConstraintType }[] = [
+    { name: 'System top', y: 0, h: spec.safeTop, color: PINK, vertical: 'MIN' },
+    { name: 'System bottom', y: bottom, h: spec.safeBottom, color: PINK, vertical: 'MAX' },
     {
       name: 'Safe area',
       y: spec.safeTop,
       h: bottom - spec.safeTop,
       color: PINK,
       tag: `safe-area · ${spec.safeTop} / ${spec.safeBottom}`,
-      outline: true,
       vertical: 'STRETCH',
     },
     {
@@ -131,31 +126,25 @@ function buildSafeArea(c: ComponentNode, ctx: BuildContext, platform: Platform) 
       h: bottom - spec.safeTop - spec.controlsRow,
       color: GREEN,
       tag: `content-safe-area · ${spec.controlsRow}`,
-      outline: true,
       vertical: 'STRETCH',
     },
   ];
   const keep = new Set(zones.map((z) => z.name));
-  for (const child of [...c.children]) if (!keep.has(child.name)) child.remove();
+  for (const child of [...guide.children]) if (!keep.has(child.name)) child.remove();
 
   for (const z of zones) {
-    const zone = ensureChild(c, z.name, 'FRAME', () => figma.createFrame());
+    const zone = ensureChild(guide, z.name, 'FRAME', () => figma.createFrame());
     zone.layoutMode = 'NONE';
     zone.resize(spec.width, z.h);
     zone.x = 0;
     zone.y = z.y;
     zone.clipsContent = false;
-    zone.fills = z.outline ? [] : [rawPaint(z.color, 0.08)];
-    zone.strokes = z.outline ? [rawPaint(z.color)] : [];
+    zone.fills = z.tag ? [] : [rawPaint(z.color, 0.08)];
+    zone.strokes = z.tag ? [rawPaint(z.color)] : [];
     zone.strokeWeight = 1;
     zone.strokeAlign = 'INSIDE';
     zone.constraints = { horizontal: 'STRETCH', vertical: z.vertical };
-    for (const child of [...zone.children]) if (child.name !== 'Tag') child.remove();
-    if (!z.tag) {
-      zone.findChild((n) => n.name === 'Tag')?.remove();
-      continue;
-    }
-    // Tag: colored chip with white text, centered between the floating controls.
+    if (!z.tag) continue;
     const tag = ensureChild(zone, 'Tag', 'FRAME', () => figma.createFrame());
     tag.layoutMode = 'HORIZONTAL';
     tag.primaryAxisSizingMode = 'AUTO';
@@ -170,48 +159,43 @@ function buildSafeArea(c: ComponentNode, ctx: BuildContext, platform: Platform) 
     t.fontSize = 10;
     t.fills = [rawPaint('#ffffff')];
     tag.x = Math.round((spec.width - tag.width) / 2);
-    // Pink tag sits in the controls row (like the docs); green just below it.
+    // Pink tag sits in the controls band (like the docs); green one just below it.
     tag.y = Math.round(z.name === 'Safe area' ? (spec.controlsRow - tag.height) / 2 : 8);
     tag.constraints = { horizontal: 'CENTER', vertical: 'MIN' };
   }
+  return guide;
+}
+
+function buildFullscreen(c: ComponentNode, ctx: BuildContext, platform: Platform, left: FullscreenLeft, state: FullscreenState) {
+  const spec = FULLSCREEN[platform]!;
+  c.layoutMode = 'NONE';
+  c.resize(spec.width, spec.screenHeight);
+  c.fills = [];
+  c.clipsContent = false;
+  c.description = NOTE;
+  const guide = buildGuide(c, ctx, platform, spec);
+  buildControls(c, ctx, platform, left, state);
+  c.insertChild(0, guide); // guide under the controls
 }
 
 export async function buildFullscreenComponents(page: PageNode, ctx: BuildContext): Promise<SetReport> {
-  const controls = FULLSCREEN_PLATFORMS.flatMap((platform) =>
+  const variants = FULLSCREEN_PLATFORMS.flatMap((platform) =>
     FULLSCREEN_LEFT.flatMap((left) =>
-      FULLSCREEN_TONES.flatMap((tone) =>
-        FULLSCREEN_STATES.map((state) => ({
-          props: { Platform: PLATFORM_LABEL[platform], Left: left, Tone: tone, State: state },
-          build: (c: ComponentNode) => buildControls(c, ctx, platform, left, tone, state),
-        })),
-      ),
+      FULLSCREEN_STATES.map((state) => ({
+        props: { Platform: PLATFORM_LABEL[platform], Left: left, State: state },
+        build: (c: ComponentNode) => buildFullscreen(c, ctx, platform, left, state),
+      })),
     ),
   );
-  const { set, report: r1 } = await ensureSet(
-    page,
-    TAG_FULLSCREEN,
-    'TG Fullscreen Controls',
-    controls,
-    FULLSCREEN_TONES.length * FULLSCREEN_STATES.length,
-  );
+  const { set, report } = await ensureSet(page, TAG_FULLSCREEN, 'TG Fullscreen', variants, FULLSCREEN_STATES.length);
   set.description = NOTE;
-  const nameKey = ensureTextProperty(set, 'App name', 'Mini App');
+  removeProperty(set, 'App name');
+  const guideKey = ensureBooleanProperty(set, 'Safe area guide', false);
   for (const c of set.children as ComponentNode[]) {
-    if (!c.name.includes('Left=Close')) continue;
-    const label = (c.findChild((n) => n.name === 'Left') as FrameNode | null)?.findChild((n) => n.name === 'Label');
-    if (label) label.componentPropertyReferences = { characters: nameKey };
+    const guide = c.findChild((n) => n.name === 'Safe area guide');
+    if (guide) guide.componentPropertyReferences = { visible: guideKey };
   }
 
-  const { report: r2 } = await ensureSet(
-    page,
-    TAG_SAFE_AREA,
-    'TG Safe Area',
-    FULLSCREEN_PLATFORMS.map((platform) => ({
-      props: { Platform: PLATFORM_LABEL[platform] },
-      build: (c: ComponentNode) => buildSafeArea(c, ctx, platform),
-    })),
-    FULLSCREEN_PLATFORMS.length,
-  );
-  return { created: r1.created + r2.created, updated: r1.updated + r2.updated };
+  findSet(page, TAG_SAFE_AREA_OLD)?.remove();
+  return report;
 }
-

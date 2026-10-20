@@ -1,7 +1,7 @@
 // Helpers for building components idempotently: every builder finds its child
 // by name and updates it in place, so re-running never breaks existing instances.
 import type { FontWeight } from '../../components/fonts';
-import type { Platform, ThemeParamKey } from '../../core';
+import type { Platform, SystemColorKey, ThemeParamKey } from '../../core';
 import { KEY_COMPONENT, KEY_IGNORE } from '../keys';
 
 export { KEY_COMPONENT, KEY_IGNORE };
@@ -12,6 +12,14 @@ export const PAGE_NAME = 'TG System Components';
 export interface BuildContext {
   vars: Map<ThemeParamKey, Variable>;
   fonts: Record<Platform, Record<FontWeight, FontName>>;
+  system: Map<SystemColorKey, Variable>;
+}
+
+/** Paint bound to a `system/` variable (Telegram system UI color that follows light/dark). */
+export function systemPaint(ctx: BuildContext, key: SystemColorKey): SolidPaint {
+  const v = ctx.system.get(key);
+  if (!v) throw new Error(`Variable system/${key} is missing. Run Update on the Themes tab.`);
+  return figma.variables.setBoundVariableForPaint({ type: 'SOLID', color: { r: 0, g: 0, b: 0 } }, 'color', v);
 }
 
 export function boundPaint(ctx: BuildContext, key: ThemeParamKey, opacity = 1): SolidPaint {
@@ -102,6 +110,12 @@ export async function ensureSet(
   const created: ComponentNode[] = [];
   const all: ComponentNode[] = [];
 
+  // Variants the kit no longer defines (e.g. a removed property) are deleted.
+  if (set) {
+    const wanted = new Set(variants.map((v) => variantName(v.props)));
+    for (const child of [...set.children]) if (!wanted.has(child.name)) child.remove();
+  }
+
   for (const v of variants) {
     const vName = variantName(v.props);
     let c = set?.children.find((n) => n.name === vName) as ComponentNode | undefined;
@@ -146,6 +160,19 @@ export async function ensureSet(
   return { set, report };
 }
 
+export function ensureBooleanProperty(set: ComponentSetNode, name: string, defaultValue: boolean): string {
+  const existing = Object.entries(set.componentPropertyDefinitions).find(
+    ([k, d]) => d.type === 'BOOLEAN' && k.split('#')[0] === name,
+  );
+  return existing ? existing[0] : set.addComponentProperty(name, 'BOOLEAN', defaultValue);
+}
+
+export function removeProperty(set: ComponentSetNode, name: string) {
+  for (const key of Object.keys(set.componentPropertyDefinitions)) {
+    if (key.split('#')[0] === name) set.deleteComponentProperty(key);
+  }
+}
+
 /** Key of a TEXT component property (e.g. "Label#12:3"), creating it if needed. */
 export function ensureTextProperty(set: ComponentSetNode, name: string, defaultValue: string): string {
   const existing = Object.entries(set.componentPropertyDefinitions).find(
@@ -187,19 +214,35 @@ function dots(frame: FrameNode, s: number, paint: SolidPaint, vertical: boolean,
  * Simple system glyphs drawn as vectors (no Telegram assets). The glyph is redrawn on every
  * build; the icon frame keeps its identity so instance overrides on it survive.
  */
-export function ensureIcon(parent: BaseNode & ChildrenMixin, name: string, kind: IconKind, s: number, paint: SolidPaint) {
+export interface IconOptions {
+  /** Empty margin around the glyph as a fraction of the size (default 0.22). */
+  inset?: number;
+  /** Stroke weight in px (default s/12). */
+  weight?: number;
+}
+
+export function ensureIcon(
+  parent: BaseNode & ChildrenMixin,
+  name: string,
+  kind: IconKind,
+  s: number,
+  paint: SolidPaint,
+  opts: IconOptions = {},
+) {
   const frame = ensureChild(parent, name, 'FRAME', () => figma.createFrame());
   frame.resize(s, s);
   frame.fills = [];
   frame.clipsContent = false;
   for (const c of [...frame.children]) c.remove();
-  const w = Math.max(1.5, s / 12);
+  const w = opts.weight ?? Math.max(1.5, s / 12);
+  const i = opts.inset ?? 0.22;
+  const k = (1 - 2 * i) * 0.27; // half-height of the chevron
   const p = (x: number, y: number) => `${(x * s).toFixed(2)} ${(y * s).toFixed(2)}`;
 
   let glyph: VectorNode | null = null;
   switch (kind) {
     case 'close':
-      glyph = strokeVector(`M ${p(0.25, 0.25)} L ${p(0.75, 0.75)} M ${p(0.75, 0.25)} L ${p(0.25, 0.75)}`, paint, w);
+      glyph = strokeVector(`M ${p(i, i)} L ${p(1 - i, 1 - i)} M ${p(1 - i, i)} L ${p(i, 1 - i)}`, paint, w);
       break;
     case 'chevron-left':
       glyph = strokeVector(`M ${p(0.62, 0.15)} L ${p(0.3, 0.5)} L ${p(0.62, 0.85)}`, paint, w * 1.1);
@@ -208,11 +251,13 @@ export function ensureIcon(parent: BaseNode & ChildrenMixin, name: string, kind:
       glyph = strokeVector(`M ${p(0.82, 0.5)} L ${p(0.18, 0.5)} M ${p(0.45, 0.23)} L ${p(0.18, 0.5)} L ${p(0.45, 0.77)}`, paint, w);
       break;
     case 'chevron-down':
-      glyph = strokeVector(`M ${p(0.22, 0.38)} L ${p(0.5, 0.64)} L ${p(0.78, 0.38)}`, paint, w);
+      glyph = strokeVector(`M ${p(i, 0.5 - k)} L ${p(0.5, 0.5 + k)} L ${p(1 - i, 0.5 - k)}`, paint, w);
       break;
-    case 'dots-h':
-      dots(frame, s, paint, false, s * 0.17, 0.3);
+    case 'dots-h': {
+      const d = opts.inset !== undefined ? s * 0.2 : s * 0.17;
+      dots(frame, s, paint, false, d, 0.5 - i - d / s / 2);
       break;
+    }
     case 'dots-v':
       dots(frame, s, paint, true, s * 0.15, 0.27);
       break;

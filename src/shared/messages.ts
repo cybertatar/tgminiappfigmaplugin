@@ -1,6 +1,6 @@
 // Typed postMessage protocol between the UI iframe and the main thread.
 import type { BarLayout } from '../components/bottom-bar';
-import type { FullscreenLeft, FullscreenTone } from '../components/fullscreen';
+import type { FullscreenLeft } from '../components/fullscreen';
 import type { HeaderColor, HeaderLeft } from '../components/header';
 import type { PaintTarget, Suggestion, ThemeParamKey } from '../core';
 
@@ -33,7 +33,7 @@ export interface PluginState {
 export type InsertRequest =
   | { kind: 'bottom-bar'; layout: BarLayout }
   | { kind: 'header'; left: HeaderLeft; color: HeaderColor }
-  | { kind: 'fullscreen'; left: FullscreenLeft; tone: FullscreenTone; guide: boolean };
+  | { kind: 'fullscreen'; left: FullscreenLeft };
 
 export interface ComponentsReport {
   created: number;

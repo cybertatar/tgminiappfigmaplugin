@@ -26,7 +26,7 @@ export interface HeaderSpec {
 
 export const HEADER: Record<Platform, HeaderSpec> = {
   ios: {
-    width: 393,
+    width: 402,
     height: 56,
     paddingX: 16,
     gap: 8,

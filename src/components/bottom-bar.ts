@@ -1,5 +1,6 @@
 // B3: geometry of the bottom bar and its Main/Secondary buttons per platform.
-// iOS: measured from the official "WebViewColors explained" illustration (see /reference):
+// iOS: width of iPhone 17 (402pt); other values measured from the official
+// "WebViewColors explained" illustration (see /reference):
 //   button 361x50 at 16pt side insets, ~10pt radius, 16pt above the button, hairline on top.
 // Android, Desktop: DRAFT approximations, not yet checked against clients.
 // Update the numbers here — the plugin rebuilds components in place.
@@ -24,7 +25,7 @@ export interface BottomBarSpec {
 
 export const BOTTOM_BAR: Record<Platform, BottomBarSpec> = {
   ios: {
-    width: 393,
+    width: 402,
     padding: { top: 16, right: 16, bottom: 8, left: 16 },
     gap: 10,
     buttonHeight: 50,
