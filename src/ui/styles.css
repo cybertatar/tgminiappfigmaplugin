@@ -225,7 +225,16 @@ select {
   gap: 5px;
 }
 .group-line select {
+  /* width: 0 lets the select shrink below its content width so the row fits the panel. */
   flex: 1;
+  width: 0;
+  min-width: 0;
+}
+.group-line .q,
+.group-line .swatch-sm,
+.group-line code,
+.group-line .link {
+  flex: none;
 }
 .group-line + .group-line {
   margin-top: 2px;
