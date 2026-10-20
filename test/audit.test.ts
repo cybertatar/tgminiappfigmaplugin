@@ -139,3 +139,17 @@ describe('bindGroups', () => {
     expect(left).toContain('fill|#007aff');
   });
 });
+
+describe('bindScreenBackgrounds', () => {
+  it('binds a top-level raw fill to bg_color and leaves inner layers alone', async () => {
+    const { bindScreenBackgrounds } = await import('../src/main/audit');
+    const page = { type: 'PAGE' };
+    const inner = node('FRAME', { name: 'Card', fills: [solid('#ffffff')] });
+    const screen = node('FRAME', { name: 'Screen', fills: [solid('#ffffff')], parent: page }, [inner]);
+    inner.parent = screen;
+    const bound = node('FRAME', { fills: [solid('#ffffff', { boundVariables: { color: {} } })], parent: page });
+    expect(bindScreenBackgrounds([screen, inner, bound], { id: 'v-bg' } as any)).toBe(1);
+    expect(screen.fills[0].boundVariables.color.id).toBe('v-bg');
+    expect(inner.fills[0].boundVariables).toBeUndefined();
+  });
+});

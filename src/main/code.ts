@@ -1,7 +1,7 @@
 // Main thread entry: owns the document, talks to the UI via postMessage.
 import { PRESETS, resolveParams } from '../core';
 import type { MainToUi, PluginState, UiToMain } from '../shared/messages';
-import { bindGroups, clearIgnored, collect, groupOccurrences, nodesOfGroup, setIgnored, themeVariables } from './audit';
+import { bindGroups, bindScreenBackgrounds, clearIgnored, collect, groupOccurrences, nodesOfGroup, setIgnored, themeVariables } from './audit';
 import { PLATFORM_LABEL } from '../components/bottom-bar';
 import { buildComponents, componentsReady, insertKit, platformOf, screenOf, switchPlatform } from './components';
 import { buildMatrix, resolveScreens } from './matrix';
@@ -93,6 +93,8 @@ async function handle(msg: UiToMain) {
       const selection = figma.currentPage.selection;
       const n = await applyPreset(selection, collection, preset, switchPlatform);
       if (n === 0) throw new Error('Select a frame, section or component.');
+      const bg = (await themeVariables(collection)).get('bg_color');
+      if (bg) bindScreenBackgrounds(selection, bg);
       const unbound = (await collect(selection)).occurrences.length;
       figma.notify(
         `${preset.name} → ${n} ${n === 1 ? 'layer' : 'layers'}` +

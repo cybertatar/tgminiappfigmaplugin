@@ -227,3 +227,22 @@ export function clearIgnored(roots: readonly SceneNode[]): number {
   roots.forEach(visit);
   return n;
 }
+
+/**
+ * A screen's own background is bg_color by definition in a native Mini App, so when a theme is
+ * applied, a raw single solid fill on a top-level frame is bound to tg/bg_color. Inner layers
+ * are left alone — those go through the audit. Returns how many screens were bound.
+ */
+export function bindScreenBackgrounds(nodes: readonly SceneNode[], bg: Variable): number {
+  let n = 0;
+  for (const node of nodes) {
+    if (node.type !== 'FRAME' && node.type !== 'COMPONENT') continue;
+    if (node.parent?.type !== 'PAGE' && node.parent?.type !== 'SECTION') continue;
+    if (node.fills === figma.mixed || node.fills.length !== 1 || hasStyle(node.fillStyleId)) continue;
+    const [paint] = node.fills;
+    if (paint.type !== 'SOLID' || paint.boundVariables?.color || paint.visible === false) continue;
+    node.fills = [figma.variables.setBoundVariableForPaint(paint, 'color', bg)];
+    n++;
+  }
+  return n;
+}
