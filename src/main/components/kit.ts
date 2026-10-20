@@ -167,9 +167,13 @@ export function ensureBooleanProperty(set: ComponentSetNode, name: string, defau
   return existing ? existing[0] : set.addComponentProperty(name, 'BOOLEAN', defaultValue);
 }
 
+/**
+ * Deletes an obsolete BOOLEAN/TEXT/INSTANCE_SWAP property by name. Variant properties are left
+ * alone: Figma can't delete them, and one may legitimately share the name (e.g. "Status bar").
+ */
 export function removeProperty(set: ComponentSetNode, name: string) {
-  for (const key of Object.keys(set.componentPropertyDefinitions)) {
-    if (key.split('#')[0] === name) set.deleteComponentProperty(key);
+  for (const [key, def] of Object.entries(set.componentPropertyDefinitions)) {
+    if (def.type !== 'VARIANT' && key.split('#')[0] === name) set.deleteComponentProperty(key);
   }
 }
 

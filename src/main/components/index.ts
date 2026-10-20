@@ -9,7 +9,7 @@ import { findCollection, KEY_PRESET, syncCollection, systemVariables } from '../
 import { buildBottomComponents, TAG_BAR, TAG_BUTTON } from './bottom';
 import { buildFullscreenComponents, TAG_FULLSCREEN } from './fullscreen';
 import { buildHeaderComponents, TAG_HEADER } from './header';
-import { ensurePage, findPage, findSet, KEY_COMPONENT, variantName, type BuildContext } from './kit';
+import { ensurePage, findPage, findSet, KEY_COMPONENT, variantName, type BuildContext, type SetReport } from './kit';
 
 
 async function resolveFonts(): Promise<{ fonts: BuildContext['fonts']; warnings: string[] }> {
@@ -49,19 +49,21 @@ export async function buildComponents(): Promise<ComponentsReport> {
   const { fonts, warnings } = await resolveFonts();
   const page = await ensurePage();
   const ctx: BuildContext = { vars, fonts, system: await systemVariables(collection) };
-  const reports = [
-    await buildBottomComponents(page, ctx),
-    await buildHeaderComponents(page, ctx),
-    await buildFullscreenComponents(page, ctx),
-  ];
-  // Stack the sets vertically in a fixed order.
-  let y = 0;
-  for (const tag of ALL_TAGS) {
-    const set = findSet(page, tag);
-    if (!set) continue;
-    set.x = 0;
-    set.y = y;
-    y += set.height + 120;
+  const reports: SetReport[] = [];
+  try {
+    reports.push(await buildBottomComponents(page, ctx));
+    reports.push(await buildHeaderComponents(page, ctx));
+    reports.push(await buildFullscreenComponents(page, ctx));
+  } finally {
+    // Stack the sets vertically in a fixed order, also after a partial build.
+    let y = 0;
+    for (const tag of ALL_TAGS) {
+      const set = findSet(page, tag);
+      if (!set) continue;
+      set.x = 0;
+      set.y = y;
+      y += set.height + 120;
+    }
   }
   return {
     created: reports.reduce((n, r) => n + r.created, 0),
