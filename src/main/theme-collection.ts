@@ -114,6 +114,11 @@ export async function syncCollection(presets: readonly Preset[]): Promise<SyncRe
     }
   }
 
+  // System variables are the kit's own: ones it no longer defines are removed.
+  for (const v of locals) {
+    const key = v.getPluginData(KEY_SYSTEM);
+    if (key && !(SYSTEM_COLOR_KEYS as string[]).includes(key)) v.remove();
+  }
   for (const key of SYSTEM_COLOR_KEYS) {
     const info = SYSTEM_COLORS[key];
     let variable =

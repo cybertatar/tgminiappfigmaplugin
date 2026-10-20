@@ -14,7 +14,7 @@ import {
   type HeaderState,
 } from '../../components/header';
 import { PLATFORMS, type Platform, type SystemColorKey, type ThemeParamKey } from '../../core';
-import { ensureStatusBar } from './status-bar';
+import { DEVICE } from '../../components/device';
 import {
   boundPaint,
   ensureBooleanProperty,
@@ -24,12 +24,16 @@ import {
   ensureTextProperty,
   rawPaint,
   removeChild,
+  removeProperty,
   systemPaint,
   type BuildContext,
   type SetReport,
 } from './kit';
 
 export const TAG_HEADER = 'header';
+
+/** Empty space for the system status bar (safeAreaInset.top); nothing is drawn in it. */
+const INSET = 'Status bar inset';
 
 const NOTE =
   'iOS measured from the official Telegram docs illustration; Android/Desktop are DRAFT. Sizes: src/components/header.ts.';
@@ -106,19 +110,27 @@ function buildHeader(
   const fonts = ctx.fonts[platform];
   const p = paints(ctx, platform, color);
 
-  // Component: status bar (system area, painted with the header color) above the header row.
+  // Component: empty system inset (status bar area, drawn by the OS) above the header row.
   c.layoutMode = 'VERTICAL';
   c.resize(spec.width, c.height);
   c.primaryAxisSizingMode = 'AUTO';
   c.counterAxisSizingMode = 'FIXED';
   c.paddingLeft = c.paddingRight = c.paddingTop = c.paddingBottom = 0;
   c.itemSpacing = 0;
-  c.fills = [p.bg];
+  c.fills = [];
   c.description = NOTE;
-  for (const child of [...c.children]) if (child.name !== 'Status bar' && child.name !== 'Bar') child.remove();
+  for (const child of [...c.children]) if (child.name !== INSET && child.name !== 'Bar') child.remove();
 
-  const status = ensureStatusBar(c, ctx, platform, p.title, spec.width);
-  if (status) status.layoutSizingHorizontal = 'FILL';
+  const top = DEVICE[platform].safeTop;
+  let status: FrameNode | null = null;
+  if (top) {
+    status = ensureChild(c, INSET, 'FRAME', () => figma.createFrame());
+    for (const child of [...status.children]) child.remove();
+    status.resize(spec.width, top);
+    status.fills = [];
+    status.layoutSizingHorizontal = 'FILL';
+    status.layoutSizingVertical = 'FIXED';
+  } else removeChild(c, INSET);
 
   const bar = ensureChild(c, 'Bar', 'FRAME', () => figma.createFrame());
   bar.layoutMode = 'HORIZONTAL';
@@ -129,7 +141,7 @@ function buildHeader(
   bar.layoutSizingHorizontal = 'FILL';
   bar.paddingLeft = bar.paddingRight = spec.paddingX;
   bar.itemSpacing = spec.gap;
-  bar.fills = [];
+  bar.fills = [p.bg];
   if (status) c.insertChild(0, status);
   c.insertChild(status ? 1 : 0, bar);
 
@@ -212,9 +224,10 @@ export async function buildHeaderComponents(page: PageNode, ctx: BuildContext): 
   const titleKey = ensureTextProperty(set, 'Title', 'Mini App');
   const subtitleKey = ensureTextProperty(set, 'Subtitle', 'bot');
   const showKey = ensureBooleanProperty(set, 'Show subtitle', true);
-  const statusKey = ensureBooleanProperty(set, 'Status bar', true);
+  removeProperty(set, 'Status bar');
+  const statusKey = ensureBooleanProperty(set, INSET, true);
   for (const c of set.children as ComponentNode[]) {
-    const status = c.findChild((n) => n.name === 'Status bar');
+    const status = c.findChild((n) => n.name === INSET);
     if (status) status.componentPropertyReferences = { visible: statusKey };
     const bar = c.findChild((n) => n.name === 'Bar') as FrameNode | null;
     const block = bar?.findChild((n) => n.name === 'Title') as FrameNode | null;

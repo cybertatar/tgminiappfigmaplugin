@@ -42,10 +42,6 @@ export const SYSTEM_COLORS = {
     description: 'Fullscreen floating controls icons and text (system UI, not a theme param)',
     value: () => solid('#ffffff'),
   },
-  status_bar_fg: {
-    description: 'Status bar time and icons over Mini App content in fullscreen (system UI)',
-    value: (_, scheme) => solid(scheme === 'dark' ? '#ffffff' : '#000000'),
-  },
   // Header content over header_bg_color: theme color when readable, else white/black.
   header_title: {
     description: 'Header title over header_bg_color: text_color, or white/black when it lacks contrast',
