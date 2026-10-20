@@ -20,8 +20,6 @@ export interface DeviceSpec {
   safeTop: number;
   /** safeAreaInset.bottom: home indicator / navigation bar. */
   safeBottom: number;
-  /** Handle drawn in the bottom inset (iOS home indicator, Android gesture handle). */
-  handle: { width: number; height: number; bottomOffset: number } | null;
 }
 
 export const DEVICE: Record<Platform, DeviceSpec> = {
@@ -31,7 +29,6 @@ export const DEVICE: Record<Platform, DeviceSpec> = {
     height: 874,
     safeTop: 54,
     safeBottom: 34,
-    handle: { width: 134, height: 5, bottomOffset: 8 },
   },
   android: {
     label: 'Android Compact, gesture navigation',
@@ -39,7 +36,6 @@ export const DEVICE: Record<Platform, DeviceSpec> = {
     height: 917,
     safeTop: 52,
     safeBottom: 24,
-    handle: { width: 108, height: 4, bottomOffset: 10 },
   },
   desktop: {
     label: 'Desktop window',
@@ -47,6 +43,5 @@ export const DEVICE: Record<Platform, DeviceSpec> = {
     height: 640,
     safeTop: 0,
     safeBottom: 0,
-    handle: null,
   },
 };

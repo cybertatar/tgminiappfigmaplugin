@@ -133,7 +133,7 @@ export async function syncCollection(presets: readonly Preset[]): Promise<SyncRe
     for (const preset of presets) {
       const modeId = modeMap[preset.id];
       if (!modeId) continue;
-      const value = info.value(resolved.get(preset.id)!, preset.scheme);
+      const value = info.value(resolved.get(preset.id)!, preset.scheme, preset.platform);
       variable.setValueForMode(modeId, hexToRgba(value.hex, value.alpha));
     }
   }

@@ -11,8 +11,7 @@ import {
   type ButtonState,
   type ButtonType,
 } from '../../components/bottom-bar';
-import { DEVICE } from '../../components/device';
-import { PLATFORMS, type Platform } from '../../core';
+import { PLATFORMS, type Platform, type ThemeParamKey } from '../../core';
 import {
   boundPaint,
   ensureChild,
@@ -22,6 +21,7 @@ import {
   overlay,
   rawPaint,
   removeChild,
+  systemPaint,
   variantName,
   type BuildContext,
   type SetReport,
@@ -31,7 +31,7 @@ export const TAG_BUTTON = 'bottom-button';
 export const TAG_BAR = 'bottom-bar';
 
 const DRAFT_NOTE =
-  'iOS measured from the official Telegram docs illustration; Android/Desktop are DRAFT. Sizes: src/components/bottom-bar.ts.';
+  'iOS and Android from Telegram client sources; Desktop is DRAFT. Inactive looks like Default (only taps are ignored). Sizes: src/components/bottom-bar.ts.';
 
 function buildButton(c: ComponentNode, ctx: BuildContext, platform: Platform, type: ButtonType, state: ButtonState) {
   const spec = BOTTOM_BAR[platform];
@@ -47,7 +47,9 @@ function buildButton(c: ComponentNode, ctx: BuildContext, platform: Platform, ty
   c.cornerRadius = spec.radius;
   c.clipsContent = true;
   c.fills = [boundPaint(ctx, colors.bg)];
-  c.opacity = state === 'Inactive' ? 0.5 : 1;
+  // Inactive looks the same as Default in both clients (only taps are ignored);
+  // iOS dims the whole button while pressed.
+  c.opacity = state === 'Pressed' && spec.pressed === 'opacity' ? 0.65 : 1;
   c.description = DRAFT_NOTE;
 
   const label = ensureChild(c, 'Label', 'TEXT', () => figma.createText());
@@ -71,36 +73,77 @@ function buildButton(c: ComponentNode, ctx: BuildContext, platform: Platform, ty
     spinner.fills = [boundPaint(ctx, colors.fg)];
   } else removeChild(c, 'Spinner');
 
-  if (state === 'Pressed') {
-    // Tint with the button's own text color: lightens or darkens depending on the theme.
-    // Both clients tint with the button's text color at 15% (Android ripple, iOS highlight).
+  if (state === 'Pressed' && spec.pressed === 'ripple') {
+    // Android ripple: the button's text color at 15%.
     const tint = ensureChild(c, 'Pressed', 'RECTANGLE', () => figma.createRectangle());
     overlay(tint, c);
     tint.fills = [boundPaint(ctx, colors.fg, 0.15)];
   } else removeChild(c, 'Pressed');
 
-  if (state === 'Shine') {
-    const shine = ensureChild(c, 'Shine', 'RECTANGLE', () => figma.createRectangle());
-    overlay(shine, c);
-    const white = (a: number): RGBA => ({ r: 1, g: 1, b: 1, a });
-    shine.fills = [
-      {
-        type: 'GRADIENT_LINEAR',
-        // Diagonal band across the middle of the button.
-        gradientTransform: [
-          [0.8, 0.6, -0.2],
-          [-0.6, 0.8, 0.4],
-        ],
-        gradientStops: [
-          { position: 0.35, color: white(0) },
-          { position: 0.5, color: white(0.35) },
-          { position: 0.65, color: white(0) },
-        ],
-      },
-    ];
-    // Decorative, not a theme color: keep it out of the unbound-color audit.
-    shine.setPluginData(KEY_IGNORE, 'self');
-  } else removeChild(c, 'Shine');
+  if (state === 'Shine') buildShine(c, ctx, spec, colors.fg);
+  else removeChild(c, 'Shine');
+}
+
+/**
+ * A horizontal band masked by a transparent→opaque→transparent gradient, with a matching border.
+ * iOS: white band ~70pt at 50% in overlay mode, border at 75%.
+ * Android: 160dp band in the text color at 25%, 2dp inner border at 80%.
+ */
+function buildShine(c: ComponentNode, ctx: BuildContext, spec: (typeof BOTTOM_BAR)[Platform], fg: ThemeParamKey) {
+  const ios = spec.shine === 'ios';
+  const w = c.width;
+  const h = c.height;
+  const shine = ensureChild(c, 'Shine', 'FRAME', () => figma.createFrame());
+  shine.layoutPositioning = 'ABSOLUTE';
+  shine.x = shine.y = 0;
+  shine.resize(w, h);
+  shine.constraints = { horizontal: 'STRETCH', vertical: 'STRETCH' };
+  shine.fills = [];
+  shine.clipsContent = true;
+  shine.cornerRadius = spec.radius;
+  for (const child of [...shine.children]) child.remove();
+
+  const half = Math.min(0.5, (ios ? 70 : 160) / 2 / w);
+  const mask = figma.createRectangle();
+  mask.name = 'Band mask';
+  mask.resize(w, h);
+  mask.fills = [
+    {
+      type: 'GRADIENT_LINEAR',
+      gradientTransform: [
+        [1, 0, 0],
+        [0, 1, 0],
+      ],
+      gradientStops: [
+        { position: 0.5 - half, color: { r: 0, g: 0, b: 0, a: 0 } },
+        { position: 0.5, color: { r: 0, g: 0, b: 0, a: 1 } },
+        { position: 0.5 + half, color: { r: 0, g: 0, b: 0, a: 0 } },
+      ],
+    },
+  ];
+  mask.isMask = true;
+
+  const band = figma.createRectangle();
+  band.name = 'Band';
+  band.resize(w, h);
+  band.fills = [ios ? rawPaint('#ffffff', 0.5) : boundPaint(ctx, fg, 0.25)];
+  if (ios) band.blendMode = 'OVERLAY';
+
+  const border = figma.createRectangle();
+  border.name = 'Border';
+  border.resize(w, h);
+  border.cornerRadius = spec.radius;
+  border.fills = [];
+  border.strokes = [ios ? rawPaint('#ffffff', 0.75) : boundPaint(ctx, fg, 0.8)];
+  border.strokeWeight = ios ? 1 : 2;
+  border.strokeAlign = 'INSIDE';
+
+  for (const n of [mask, band, border]) {
+    shine.appendChild(n);
+    n.x = n.y = 0;
+    n.constraints = { horizontal: 'STRETCH', vertical: 'STRETCH' };
+  }
+  shine.setPluginData(KEY_IGNORE, 'tree');
 }
 
 async function buildBar(
@@ -125,12 +168,10 @@ async function buildBar(
   c.paddingBottom = spec.safeAreaBottom ? 0 : spec.padding.bottom;
   c.itemSpacing = spec.padding.bottom;
   c.fills = [boundPaint(ctx, 'bottom_bar_bg_color')];
-  if (spec.topSeparator) {
-    c.strokes = [
-      spec.topSeparator === 'theme' ? boundPaint(ctx, 'section_separator_color') : rawPaint('#000000', 0.1),
-    ];
+  if (spec.separatorWeight) {
+    c.strokes = [systemPaint(ctx, 'bottom_bar_separator')];
     c.strokeAlign = 'INSIDE';
-    c.strokeTopWeight = spec.topSeparator === 'theme' ? 0.5 : 1;
+    c.strokeTopWeight = spec.separatorWeight;
     c.strokeRightWeight = c.strokeBottomWeight = c.strokeLeftWeight = 0;
   } else c.strokes = [];
   c.description = DRAFT_NOTE;
@@ -163,24 +204,18 @@ async function buildBar(
     if (node) row.insertChild(i, node);
   });
 
-  // System inset below the buttons. On Android it is the navigation bar, which Telegram paints
-  // with the bottom bar color (setBottomBarColor docs), so it lives inside this component.
-  const handle = DEVICE[platform].handle;
-  if (spec.safeAreaBottom && handle) {
-    const area = ensureChild(c, 'Home Indicator', 'FRAME', () => figma.createFrame());
+  // Empty system inset below the buttons (home indicator / navigation bar, drawn by the OS).
+  // Telegram paints it with the bottom bar color (on Android via setBottomBarColor), so it is part
+  // of the bar.
+  removeChild(c, 'Home Indicator');
+  if (spec.safeAreaBottom) {
+    const area = ensureChild(c, 'System inset', 'FRAME', () => figma.createFrame());
+    for (const child of [...area.children]) child.remove();
     area.fills = [];
-    area.layoutMode = 'HORIZONTAL';
-    area.primaryAxisAlignItems = 'CENTER';
-    area.counterAxisAlignItems = 'MAX';
-    area.paddingBottom = handle.bottomOffset;
     area.resize(spec.width, spec.safeAreaBottom);
     area.layoutSizingHorizontal = 'FILL';
     area.layoutSizingVertical = 'FIXED';
-    const pill = ensureChild(area, 'Indicator', 'RECTANGLE', () => figma.createRectangle());
-    pill.resize(handle.width, handle.height);
-    pill.cornerRadius = handle.height / 2;
-    pill.fills = [boundPaint(ctx, 'text_color')];
-  } else removeChild(c, 'Home Indicator');
+  } else removeChild(c, 'System inset');
 }
 
 export async function buildBottomComponents(page: PageNode, ctx: BuildContext): Promise<SetReport> {

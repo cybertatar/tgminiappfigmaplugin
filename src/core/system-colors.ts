@@ -2,7 +2,7 @@
 // Stored in the Telegram Theme collection under `system/`, without CSS syntax, and computed
 // per mode from the preset: either by scheme, or derived from theme params (e.g. contrast).
 import { contrastRatio, hexToRgb } from './color';
-import type { Scheme } from './preset';
+import type { Platform, Scheme } from './preset';
 import type { ResolvedThemeParams } from './theme-params';
 
 export interface SystemColorValue {
@@ -12,7 +12,7 @@ export interface SystemColorValue {
 
 export interface SystemColorInfo {
   description: string;
-  value: (params: ResolvedThemeParams, scheme: Scheme) => SystemColorValue;
+  value: (params: ResolvedThemeParams, scheme: Scheme, platform: Platform) => SystemColorValue;
 }
 
 const solid = (hex: string, alpha = 1): SystemColorValue => ({ hex, alpha });
@@ -31,10 +31,20 @@ export function readableOn(bg: string, preferred: string, min: number, fallbackA
 
 const WHITE = { r: 1, g: 1, b: 1 };
 
-// Fullscreen pill colors depend on setHeaderColor (a component variant), and header content
-// colors follow Telegram's own rules per variant, so no theme-derived system colors are needed
-// right now. Variables removed from this list are deleted from files on the next sync.
-export const SYSTEM_COLORS: Record<string, SystemColorInfo> = {};
+// Variables removed from this list are deleted from files on the next sync.
+export const SYSTEM_COLORS: Record<string, SystemColorInfo> = {
+  // Line above the bottom bar. iOS: tabBar.separatorColor (DefaultDay/DarkPresentationTheme);
+  // Android: BotButtons separatorPaint = black at 10%.
+  bottom_bar_separator: {
+    description: 'Line above the bottom bar (system UI, not a theme param)',
+    value: (_, scheme, platform) =>
+      platform === 'ios'
+        ? scheme === 'dark'
+          ? solid('#545458', 0.55)
+          : solid('#b2b2b2')
+        : solid('#000000', 0.1),
+  },
+};
 
 export type SystemColorKey = string;
 export const SYSTEM_COLOR_KEYS = Object.keys(SYSTEM_COLORS) as SystemColorKey[];

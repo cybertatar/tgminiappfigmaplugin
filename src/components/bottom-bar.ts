@@ -1,9 +1,15 @@
 // B3: geometry of the bottom bar and its Main/Secondary buttons per platform.
 // iOS: Telegram-iOS AttachmentPanel.swift, "legacy" panel style used by Mini Apps:
-//   buttons 50pt, corner radius 12, 16pt side insets, 16pt between buttons, 8pt above,
-//   semibold 17, progress diameter height-22 with 3pt line, hairline separator on top.
+//   buttons 50pt, corner radius 12, 16pt side insets, 16pt between buttons, 8pt above and the
+//   home indicator inset right below (panel = 8 + 50 + 34), semibold 17, progress diameter
+//   height-22 with a 3pt line, hairline separator (tab bar separator color) on top.
+//   Pressed: whole button at alpha 0.65. Shine: white band ~70pt at 50% (overlay) + border at 75%.
 // Android: Telegram Android BotButtons.java: buttons 44dp, radius 9, 8dp side insets,
-//   10dp between side-by-side buttons, 7dp above/between/below, bold 14, top separator black 10%.
+//   10dp between side-by-side buttons, 7dp above/between/below, bold 14, 1px black 10% line above.
+//   Pressed: ripple in the text color at 15%. Shine (CellFlickerDrawable): 160dp band in the text
+//   color at 25% + 2dp inner border at 80%. Progress (CircularProgressDrawable): 18dp, 2.25dp line.
+// Both: an inactive button (is_active=false) looks the same; only taps are ignored. The SDK
+//   turns the shine off while inactive or loading.
 // Desktop: DRAFT approximations, not yet checked against tdesktop sources.
 // Update the numbers here — the plugin rebuilds components in place.
 import type { Platform } from '../core';
@@ -25,14 +31,16 @@ export interface BottomBarSpec {
   spinnerWeight: number;
   /** System inset below the bar (iOS home indicator, Android navigation bar). 0 = none. */
   safeAreaBottom: number;
-  /** Line between content and the bar: theme separator hairline (iOS), black 10% (Android), none. */
-  topSeparator: 'theme' | 'black10' | null;
+  /** Line above the bar (system/bottom_bar_separator), its weight in px; 0 = none. */
+  separatorWeight: number;
+  pressed: 'opacity' | 'ripple';
+  shine: 'ios' | 'android';
 }
 
 export const BOTTOM_BAR: Record<Platform, BottomBarSpec> = {
   ios: {
     width: DEVICE.ios.width,
-    padding: { top: 8, right: 16, bottom: 8, left: 16 },
+    padding: { top: 8, right: 16, bottom: 0, left: 16 },
     gap: 16,
     gapVertical: 16,
     buttonHeight: 50,
@@ -42,7 +50,9 @@ export const BOTTOM_BAR: Record<Platform, BottomBarSpec> = {
     spinnerSize: 28,
     spinnerWeight: 3,
     safeAreaBottom: DEVICE.ios.safeBottom,
-    topSeparator: 'theme',
+    separatorWeight: 0.5,
+    pressed: 'opacity',
+    shine: 'ios',
   },
   android: {
     width: DEVICE.android.width,
@@ -53,10 +63,12 @@ export const BOTTOM_BAR: Record<Platform, BottomBarSpec> = {
     radius: 9,
     fontSize: 14,
     textCase: 'ORIGINAL',
-    spinnerSize: 22,
-    spinnerWeight: 2.5,
+    spinnerSize: 18,
+    spinnerWeight: 2.25,
     safeAreaBottom: DEVICE.android.safeBottom,
-    topSeparator: 'black10',
+    separatorWeight: 1,
+    pressed: 'ripple',
+    shine: 'android',
   },
   desktop: {
     width: DEVICE.desktop.width,
@@ -70,7 +82,9 @@ export const BOTTOM_BAR: Record<Platform, BottomBarSpec> = {
     spinnerSize: 18,
     spinnerWeight: 2,
     safeAreaBottom: DEVICE.desktop.safeBottom,
-    topSeparator: null,
+    separatorWeight: 0,
+    pressed: 'ripple',
+    shine: 'android',
   },
 };
 
