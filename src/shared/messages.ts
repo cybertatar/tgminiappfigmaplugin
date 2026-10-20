@@ -13,7 +13,11 @@ export interface PluginState {
     themeable: number;
     /** Preset applied to all themeable nodes, if they agree. */
     presetId: string | null;
+    /** Source screens the theme matrix would be built for. */
+    screens: number;
   };
+  /** Presets checked for the theme matrix (remembered between runs). */
+  matrixPresetIds: string[];
 }
 
 export interface SyncReport {
@@ -27,7 +31,9 @@ export interface SyncReport {
 export type UiToMain =
   | { type: 'ready' }
   | { type: 'connect-theme' }
-  | { type: 'apply-preset'; presetId: string };
+  | { type: 'apply-preset'; presetId: string }
+  | { type: 'set-matrix-presets'; presetIds: string[] }
+  | { type: 'build-matrix' };
 
 export type MainToUi =
   | { type: 'state'; state: PluginState }

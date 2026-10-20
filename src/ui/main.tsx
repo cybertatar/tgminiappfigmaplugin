@@ -81,11 +81,60 @@ function ThemesTab({ state, report }: { state: PluginState; report: SyncReport |
           );
         })}
       </ul>
+      <MatrixCard state={state} available={inCollection} />
+
       <p class="muted small">
         DRAFT themes use approximate colors. Capture real values with the sniffer page and update{' '}
         <code>presets/*.json</code>.
       </p>
     </div>
+  );
+}
+
+function MatrixCard({ state, available }: { state: PluginState; available: Set<string> }) {
+  const checked = new Set(state.matrixPresetIds);
+  const chosen = PRESETS.filter((p) => checked.has(p.id) && available.has(p.id));
+  const { screens } = state.selection;
+
+  const toggle = (id: string) => {
+    const next = new Set(checked);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    // Keep the built-in order regardless of click order.
+    send({ type: 'set-matrix-presets', presetIds: PRESETS.filter((p) => next.has(p.id)).map((p) => p.id) });
+  };
+
+  return (
+    <section class="card matrix">
+      <div class="title">Theme matrix</div>
+      <div class="muted">
+        {state.collection === null
+          ? 'Connect Telegram Theme first'
+          : screens === 0
+            ? 'Select a screen to preview it in every theme'
+            : `Copies ${screens === 1 ? 'the selected screen' : `${screens} screens`} into a preview section`}
+      </div>
+      <div class="checks">
+        {PRESETS.map((p) => (
+          <label key={p.id} class={available.has(p.id) ? 'check' : 'check off'}>
+            <input
+              type="checkbox"
+              checked={checked.has(p.id)}
+              disabled={!available.has(p.id)}
+              onChange={() => toggle(p.id)}
+            />
+            {p.name}
+          </label>
+        ))}
+      </div>
+      <button
+        class="primary wide"
+        disabled={screens === 0 || chosen.length === 0}
+        onClick={() => send({ type: 'build-matrix' })}
+      >
+        Lay out {chosen.length} {chosen.length === 1 ? 'theme' : 'themes'}
+      </button>
+    </section>
   );
 }
 

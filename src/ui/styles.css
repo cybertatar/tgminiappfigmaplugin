@@ -151,3 +151,34 @@ code {
   background: var(--figma-color-bg-danger-tertiary);
   color: var(--figma-color-text-danger);
 }
+
+.matrix {
+  margin-top: 16px;
+}
+.checks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px 8px;
+  margin: 10px 0;
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  cursor: pointer;
+}
+.check.off {
+  color: var(--figma-color-text-disabled);
+  cursor: default;
+}
+.check input {
+  margin: 0;
+}
+.wide {
+  width: 100%;
+}
+.primary:disabled {
+  background: var(--figma-color-bg-disabled);
+  color: var(--figma-color-text-ondisabled);
+}

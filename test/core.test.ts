@@ -6,6 +6,7 @@ import {
   generateSnippet,
   hexToRgb,
   isLargeText,
+  layoutMatrix,
   normalizeHex,
   parsePresetJson,
   preferredOnColor,
@@ -174,5 +175,20 @@ describe('snippet', () => {
     expect(s).not.toContain('position');
     expect(s).toContain('tg.SecondaryButton.showProgress();');
     expect(s).not.toContain('MainButton');
+  });
+});
+
+describe('matrix layout', () => {
+  it('places copies in one row with labels above', () => {
+    const l = layoutMatrix(3, { width: 390, height: 844 });
+    expect(l.cells.map((c) => c.screen.x)).toEqual([80, 550, 1020]);
+    expect(l.cells[0].label).toEqual({ x: 80, y: 80 });
+    expect(l.cells[0].screen.y).toBe(80 + 56 + 24);
+    expect(l.width).toBe(1020 + 390 + 80);
+    expect(l.height).toBe(80 + 56 + 24 + 844 + 80);
+  });
+
+  it('handles a single copy', () => {
+    expect(layoutMatrix(1, { width: 100, height: 100 }).width).toBe(260);
   });
 });

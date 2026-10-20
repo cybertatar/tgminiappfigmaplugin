@@ -18,7 +18,7 @@ Full spec: [docs/SPEC.md](docs/SPEC.md).
 | A1 `Telegram Theme` collection | ✅ |
 | A2 Apply theme to selection | ✅ (platform switch waits for components) |
 | Sniffer page | ✅ |
-| A3 Theme matrix | ⏳ |
+| A3 Theme matrix | ✅ |
 | B1–B5 System components | ⏳ |
 | C1–C2 Audits | ⏳ |
 | D Handoff UI | ⏳ (`generateSnippet` is ready in core) |
