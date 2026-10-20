@@ -171,3 +171,8 @@ export function deltaE2000Lab(x: Lab, y: Lab): number {
 export function deltaE2000(x: RGB, y: RGB): number {
   return deltaE2000Lab(rgbToLab(x), rgbToLab(y));
 }
+
+/** Contrast of text color `fg` (possibly translucent) drawn over an opaque `bg`. */
+export function textContrast(fg: RGBA, bg: RGB): number {
+  return contrastRatio(composite(fg, bg), bg);
+}

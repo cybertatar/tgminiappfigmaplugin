@@ -379,3 +379,66 @@ select {
   background: var(--figma-color-bg-selected);
   font-weight: 600;
 }
+
+.subtabs {
+  display: flex;
+  gap: 4px;
+  padding: 10px 12px 0;
+}
+.subtabs button {
+  flex: 1;
+  border: 1px solid var(--figma-color-border);
+  border-radius: 5px;
+  background: none;
+  padding: 4px;
+}
+.subtabs button.on {
+  background: var(--figma-color-bg-selected);
+  border-color: var(--figma-color-border-selected);
+  font-weight: 600;
+}
+.table-wrap {
+  overflow-x: auto;
+  margin: 8px 0;
+}
+.contrast {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.contrast th {
+  font-weight: 600;
+  text-align: center;
+  padding: 4px 3px;
+  white-space: nowrap;
+  color: var(--figma-color-text-secondary);
+}
+.contrast th:first-child,
+.contrast td.layer {
+  text-align: left;
+}
+.contrast td {
+  padding: 4px 3px;
+  text-align: center;
+  border-top: 1px solid var(--figma-color-border);
+}
+.contrast td.layer {
+  max-width: 110px;
+}
+.contrast tr {
+  cursor: pointer;
+}
+.contrast tr:hover td {
+  background: var(--figma-color-bg-hover);
+}
+.contrast td.bad {
+  color: var(--figma-color-text-danger);
+  background: var(--figma-color-bg-danger-tertiary);
+  font-weight: 600;
+}
+.contrast td.good {
+  color: var(--figma-color-text-secondary);
+}
+.contrast td.na {
+  color: var(--figma-color-text-tertiary);
+}

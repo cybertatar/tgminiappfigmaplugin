@@ -1,10 +1,18 @@
 import { render } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import { PRESETS, resolveParams, type Preset } from '../core';
-import type { ComponentsReport, MainToUi, PluginState, ScanResult, SyncReport } from '../shared/messages';
+import type {
+  ComponentsReport,
+  ContrastResult,
+  MainToUi,
+  PluginState,
+  ScanResult,
+  SyncReport,
+} from '../shared/messages';
 import { send } from './bridge';
 import { ChecksTab } from './checks';
 import { ComponentsTab } from './components-tab';
+import { ContrastView } from './contrast';
 import './styles.css';
 
 type Tab = 'themes' | 'components' | 'checks' | 'handoff';
@@ -173,6 +181,8 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [scan, setScan] = useState<ScanResult | null>(null);
   const [componentsReport, setComponentsReport] = useState<ComponentsReport | null>(null);
+  const [contrast, setContrast] = useState<ContrastResult | null>(null);
+  const [check, setCheck] = useState<'colors' | 'contrast'>('colors');
 
   useEffect(() => {
     onmessage = (e: MessageEvent) => {
@@ -184,6 +194,7 @@ function App() {
       } else if (msg.type === 'sync-done') setReport(msg.report);
       else if (msg.type === 'scan-result') setScan(msg.result);
       else if (msg.type === 'components-done') setComponentsReport(msg.report);
+      else if (msg.type === 'contrast-result') setContrast(msg.result);
       else if (msg.type === 'error') setError(msg.message);
     };
     send({ type: 'ready' });
@@ -213,7 +224,23 @@ function App() {
       ) : tab === 'components' ? (
         <ComponentsTab state={state} report={componentsReport} />
       ) : tab === 'checks' ? (
-        <ChecksTab state={state} scan={scan} />
+        <>
+          <div class="subtabs">
+            <button class={check === 'colors' ? 'on' : ''} onClick={() => setCheck('colors')}>
+              Unbound colors
+            </button>
+            <button class={check === 'contrast' ? 'on' : ''} onClick={() => setCheck('contrast')}>
+              Contrast
+            </button>
+          </div>
+          {check === 'colors' ? (
+            <ChecksTab state={state} scan={scan} />
+          ) : (
+            <div class="tab">
+              <ContrastView state={state} result={contrast} />
+            </div>
+          )}
+        </>
       ) : (
         <Placeholder what="Copy for development" />
       )}

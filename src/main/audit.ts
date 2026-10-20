@@ -41,7 +41,7 @@ export interface Collected {
 }
 
 /** Kit components are bound by construction; their decorative paints (shine, translucent pills) are intended. */
-async function isKitInstance(node: InstanceNode, cache: Map<string, boolean>): Promise<boolean> {
+export async function isKitInstance(node: InstanceNode, cache: Map<string, boolean>): Promise<boolean> {
   const main = await node.getMainComponentAsync();
   if (!main) return false;
   let result = cache.get(main.id);

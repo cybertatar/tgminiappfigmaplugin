@@ -80,6 +80,27 @@ export interface ScanResult {
   stats: ScanStats;
 }
 
+export interface ContrastRow {
+  nodeId: string;
+  name: string;
+  text: string;
+  /** WCAG large text: 4.5 → 3. */
+  large: boolean;
+  threshold: number;
+  /** One ratio per preset (worst text segment); null when a color can't be resolved. */
+  ratios: (number | null)[];
+  /** Number of themes below the threshold. */
+  failing: number;
+}
+
+export interface ContrastResult {
+  presetIds: string[];
+  rows: ContrastRow[];
+  checked: number;
+  truncated: boolean;
+  skipped: { noBackground: number; unsupported: number; system: number };
+}
+
 export type UiToMain =
   | { type: 'ready' }
   | { type: 'connect-theme' }
@@ -95,11 +116,14 @@ export type UiToMain =
   | { type: 'clear-ignored' }
   | { type: 'show-group'; groupId: string }
   | { type: 'build-components' }
-  | { type: 'insert'; request: InsertRequest };
+  | { type: 'insert'; request: InsertRequest }
+  | { type: 'contrast' }
+  | { type: 'select-node'; nodeId: string };
 
 export type MainToUi =
   | { type: 'state'; state: PluginState }
   | { type: 'sync-done'; report: SyncReport }
   | { type: 'scan-result'; result: ScanResult | null }
   | { type: 'components-done'; report: ComponentsReport }
+  | { type: 'contrast-result'; result: ContrastResult }
   | { type: 'error'; message: string };

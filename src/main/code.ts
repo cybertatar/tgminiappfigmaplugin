@@ -4,6 +4,7 @@ import type { MainToUi, PluginState, UiToMain } from '../shared/messages';
 import { bindGroups, bindScreenBackgrounds, clearIgnored, collect, groupOccurrences, nodesOfGroup, setIgnored, themeVariables } from './audit';
 import { PLATFORM_LABEL } from '../components/bottom-bar';
 import { buildComponents, componentsReady, insertKit, platformOf, screenOf, switchPlatform } from './components';
+import { checkContrast } from './contrast';
 import { buildMatrix, resolveScreens } from './matrix';
 import { applyPreset, findCollection, isThemeable, modeList, presetOf, syncCollection } from './theme-collection';
 
@@ -133,6 +134,22 @@ async function handle(msg: UiToMain) {
       const nodes = await insertKit(screen, msg.request);
       figma.currentPage.selection = nodes.filter((n) => !n.locked);
       figma.notify(`Added to ${screen.name}`);
+      break;
+    }
+    case 'contrast': {
+      const collection = await findCollection();
+      if (!collection) throw new Error('Connect Telegram Theme first.');
+      const selection = figma.currentPage.selection;
+      if (selection.length === 0) throw new Error('Select the screens to check.');
+      post({ type: 'contrast-result', result: await checkContrast(selection, collection, PRESETS) });
+      break;
+    }
+    case 'select-node': {
+      const node = await figma.getNodeByIdAsync(msg.nodeId);
+      if (node && 'visible' in node) {
+        figma.currentPage.selection = [node as SceneNode];
+        figma.viewport.scrollAndZoomIntoView([node as SceneNode]);
+      }
       break;
     }
     case 'scan': {
