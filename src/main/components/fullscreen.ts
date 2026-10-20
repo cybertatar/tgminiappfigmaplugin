@@ -6,13 +6,16 @@ import {
   FULLSCREEN_LABEL,
   FULLSCREEN_LEFT,
   FULLSCREEN_PLATFORMS,
+  FULLSCREEN_PRESSED_OPACITY,
   FULLSCREEN_STATES,
+  FULLSCREEN_STATUS,
+  PILL_COLORS,
   type FullscreenLeft,
+  type FullscreenStatus,
   type FullscreenSpec,
   type FullscreenState,
   type PillSpec,
 } from '../../components/fullscreen';
-import { PRESSED_OPACITY } from '../../components/header';
 import type { Platform } from '../../core';
 import {
   ensureBooleanProperty,
@@ -22,7 +25,6 @@ import {
   findSet,
   rawPaint,
   removeProperty,
-  systemPaint,
   type BuildContext,
   type SetReport,
 } from './kit';
@@ -32,10 +34,10 @@ export const TAG_FULLSCREEN = 'fullscreen-controls';
 const TAG_SAFE_AREA_OLD = 'safe-area';
 
 const NOTE =
-  'iOS measured on iPhone 17 from client screenshots; Android is DRAFT. Pill colors follow the theme ' +
-  '(system/fullscreen_control_* variables). Sizes: src/components/fullscreen.ts.';
+  'iOS from Telegram-iOS FullscreenControlsComponent; Android is DRAFT. "Status bar": Light by default, ' +
+  'Dark when the app sets a light header color. Sizes: src/components/fullscreen.ts.';
 
-function pill(parent: FrameNode, name: string, spec: PillSpec, ctx: BuildContext, pressed: boolean): FrameNode {
+function pill(parent: FrameNode, name: string, spec: PillSpec, status: FullscreenStatus, pressed: boolean): FrameNode {
   const f = ensureChild(parent, name, 'FRAME', () => figma.createFrame());
   f.layoutMode = 'HORIZONTAL';
   f.counterAxisAlignItems = 'CENTER';
@@ -47,15 +49,23 @@ function pill(parent: FrameNode, name: string, spec: PillSpec, ctx: BuildContext
   f.paddingRight = spec.paddingRight;
   f.itemSpacing = spec.gap;
   f.cornerRadius = spec.height / 2;
-  f.fills = [systemPaint(ctx, 'fullscreen_control_bg')];
+  const colors = PILL_COLORS[status];
+  f.fills = [rawPaint(colors.bg, colors.bgAlpha)];
   f.effects = [{ type: 'BACKGROUND_BLUR', blurType: 'NORMAL', radius: 20, visible: true }];
-  f.opacity = pressed ? PRESSED_OPACITY + 0.2 : 1;
+  f.opacity = pressed ? FULLSCREEN_PRESSED_OPACITY : 1;
   return f;
 }
 
-function buildControls(c: ComponentNode, ctx: BuildContext, platform: Platform, left: FullscreenLeft, state: FullscreenState) {
+function buildControls(
+  c: ComponentNode,
+  ctx: BuildContext,
+  platform: Platform,
+  left: FullscreenLeft,
+  status: FullscreenStatus,
+  state: FullscreenState,
+) {
   const spec = FULLSCREEN[platform]!;
-  const fg = systemPaint(ctx, 'fullscreen_control_fg');
+  const fg = rawPaint(PILL_COLORS[status].fg);
 
   const row = ensureChild(c, 'Controls', 'FRAME', () => figma.createFrame());
   row.layoutMode = 'HORIZONTAL';
@@ -72,19 +82,19 @@ function buildControls(c: ComponentNode, ctx: BuildContext, platform: Platform, 
   row.y = spec.safeTop;
   row.constraints = { horizontal: 'STRETCH', vertical: 'MIN' };
 
-  const l = pill(row, 'Left', spec.left, ctx, state === 'Left pressed');
+  const l = pill(row, 'Left', spec.left, status, state === 'Left pressed');
   ensureIcon(l, 'Icon', left === 'Back' ? 'chevron-left' : 'close', spec.left.iconSize, fg, {
     inset: left === 'Back' ? 0.1 : 0.04,
     weight: spec.left.iconWeight,
   });
   const label = ensureChild(l, 'Label', 'TEXT', () => figma.createText());
-  label.fontName = ctx.fonts[platform].semibold;
+  label.fontName = ctx.fonts[platform].rounded;
   label.characters = FULLSCREEN_LABEL[left];
   label.fontSize = spec.left.fontSize;
   label.fills = [fg];
   l.insertChild(0, l.findChild((n) => n.name === 'Icon')!);
 
-  const r = pill(row, 'Right', spec.right, ctx, state === 'Right pressed');
+  const r = pill(row, 'Right', spec.right, status, state === 'Right pressed');
   ensureIcon(r, 'Collapse', 'chevron-down', spec.right.chevronSize, fg, { inset: 0.02, weight: spec.left.iconWeight });
   ensureIcon(r, 'Menu', 'dots-h', spec.right.dotsSize, fg, { inset: 0 });
   r.insertChild(0, r.findChild((n) => n.name === 'Collapse')!);
@@ -166,7 +176,14 @@ function buildGuide(c: ComponentNode, ctx: BuildContext, platform: Platform, spe
   return guide;
 }
 
-function buildFullscreen(c: ComponentNode, ctx: BuildContext, platform: Platform, left: FullscreenLeft, state: FullscreenState) {
+function buildFullscreen(
+  c: ComponentNode,
+  ctx: BuildContext,
+  platform: Platform,
+  left: FullscreenLeft,
+  status: FullscreenStatus,
+  state: FullscreenState,
+) {
   const spec = FULLSCREEN[platform]!;
   c.layoutMode = 'NONE';
   c.resize(spec.width, spec.screenHeight);
@@ -175,20 +192,28 @@ function buildFullscreen(c: ComponentNode, ctx: BuildContext, platform: Platform
   c.description = NOTE;
   c.findChild((n) => n.name === 'Status bar')?.remove();
   const guide = buildGuide(c, ctx, platform, spec);
-  buildControls(c, ctx, platform, left, state);
+  buildControls(c, ctx, platform, left, status, state);
   c.insertChild(0, guide); // guide under the controls
 }
 
 export async function buildFullscreenComponents(page: PageNode, ctx: BuildContext): Promise<SetReport> {
   const variants = FULLSCREEN_PLATFORMS.flatMap((platform) =>
     FULLSCREEN_LEFT.flatMap((left) =>
-      FULLSCREEN_STATES.map((state) => ({
-        props: { Platform: PLATFORM_LABEL[platform], Left: left, State: state },
-        build: (c: ComponentNode) => buildFullscreen(c, ctx, platform, left, state),
-      })),
+      FULLSCREEN_STATUS.flatMap((status) =>
+        FULLSCREEN_STATES.map((state) => ({
+          props: { Platform: PLATFORM_LABEL[platform], Left: left, 'Status bar': status, State: state },
+          build: (c: ComponentNode) => buildFullscreen(c, ctx, platform, left, status, state),
+        })),
+      ),
     ),
   );
-  const { set, report } = await ensureSet(page, TAG_FULLSCREEN, 'TG Fullscreen', variants, FULLSCREEN_STATES.length);
+  const { set, report } = await ensureSet(
+    page,
+    TAG_FULLSCREEN,
+    'TG Fullscreen',
+    variants,
+    FULLSCREEN_STATUS.length * FULLSCREEN_STATES.length,
+  );
   set.description = NOTE;
   removeProperty(set, 'App name');
   const guideKey = ensureBooleanProperty(set, 'Safe area guide', false);

@@ -1,7 +1,12 @@
 // B1: Mini App header in windowed mode (compact / fullsize).
 // iOS: measured from the official "WebViewColors explained" illustration (see /reference):
 //   56pt tall, 16pt side insets, text "Cancel" left, title + "bot" centered, ⋯ in a ~22pt circle right.
-// Android, Desktop: DRAFT approximations (Material-style icon buttons, left-aligned title).
+// Default color (no setHeaderColor), from client sources:
+//   iOS: navigation bar = header_bg_color (WebAppController.updateHeaderBackgroundColor);
+//   Android: windowBackgroundWhite = section_bg_color (BotWebViewAttachedSheet), title text_color.
+// Custom setHeaderColor(#hex): content is black or white by the color's lightness (iOS > 0.5,
+//   Android luminance >= 0.5), secondary text at 0.5–0.64 alpha on iOS.
+// Android: action bar 56dp, close/back icon (BackDrawable), ⋮ menu. Desktop: DRAFT.
 import type { Platform, ThemeParamKey } from '../core';
 import { DEVICE } from './device';
 
@@ -21,6 +26,8 @@ export interface HeaderSpec {
   leftTextSize: number;
   menuIcon: 'dots-circle' | 'dots-v';
   iconSize: number;
+  /** Header color when the app hasn't called setHeaderColor. */
+  defaultBg: ThemeParamKey;
   /** Theme colors of the content when the header uses a theme color. */
   fg: { title: ThemeParamKey; subtitle: ThemeParamKey; buttons: ThemeParamKey };
 }
@@ -39,6 +46,7 @@ export const HEADER: Record<Platform, HeaderSpec> = {
     leftTextSize: 17,
     menuIcon: 'dots-circle',
     iconSize: 22,
+    defaultBg: 'header_bg_color',
     fg: { title: 'text_color', subtitle: 'accent_text_color', buttons: 'accent_text_color' },
   },
   android: {
@@ -54,6 +62,7 @@ export const HEADER: Record<Platform, HeaderSpec> = {
     leftTextSize: 0,
     menuIcon: 'dots-v',
     iconSize: 24,
+    defaultBg: 'section_bg_color',
     fg: { title: 'text_color', subtitle: 'hint_color', buttons: 'text_color' },
   },
   desktop: {
@@ -69,6 +78,7 @@ export const HEADER: Record<Platform, HeaderSpec> = {
     leftTextSize: 0,
     menuIcon: 'dots-v',
     iconSize: 20,
+    defaultBg: 'header_bg_color',
     fg: { title: 'text_color', subtitle: 'hint_color', buttons: 'text_color' },
   },
 };
@@ -81,11 +91,10 @@ export type HeaderLeft = (typeof HEADER_LEFT)[number];
  * Header color as set by `setHeaderColor`: a theme key, or a custom hex.
  * Custom colors can't follow the theme, so content contrast is picked per variant.
  */
-export const HEADER_COLORS = ['Header', 'Background', 'Secondary', 'Custom dark', 'Custom light'] as const;
+export const HEADER_COLORS = ['Default', 'Background', 'Secondary', 'Custom dark', 'Custom light'] as const;
 export type HeaderColor = (typeof HEADER_COLORS)[number];
 
 export const HEADER_COLOR_PARAM: Partial<Record<HeaderColor, ThemeParamKey>> = {
-  Header: 'header_bg_color',
   Background: 'bg_color',
   Secondary: 'secondary_bg_color',
 };
@@ -93,8 +102,8 @@ export const HEADER_COLOR_PARAM: Partial<Record<HeaderColor, ThemeParamKey>> = {
 /** Placeholder colors for custom headers: designers override the fill on the instance. */
 export const CUSTOM_HEADER: Record<'Custom dark' | 'Custom light', { bg: string; fg: string; subtitleOpacity: number }> =
   {
-    'Custom dark': { bg: '#1c1c1e', fg: '#ffffff', subtitleOpacity: 0.6 },
-    'Custom light': { bg: '#ffffff', fg: '#000000', subtitleOpacity: 0.5 },
+    'Custom dark': { bg: '#1c1c1e', fg: '#ffffff', subtitleOpacity: 0.64 },
+    'Custom light': { bg: '#ffffff', fg: '#000000', subtitleOpacity: 0.64 },
   };
 
 export const HEADER_STATES = ['Default', 'Left pressed', 'Menu pressed'] as const;

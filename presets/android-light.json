@@ -1,11 +1,11 @@
 {
-  "id": "android-light", "name": "Android Light", "platform": "android", "scheme": "light", "draft": true,
-  "source": "approximation from memory of the native palette — capture with sniffer/ and replace",
+  "id": "android-light", "name": "Android Light", "platform": "android", "scheme": "light",
+  "source": "Telegram Android 0aae959: BotWebViewAttachedSheet.makeThemeParams + ThemeColors.java defaults + bluebubbles.attheme (default \"Blue\" theme, default accent)",
   "params": {
-    "bg_color": "#ffffff", "secondary_bg_color": "#f0f0f0", "header_bg_color": "#527da3",
-    "bottom_bar_bg_color": "#ffffff", "section_bg_color": "#ffffff", "section_separator_color": "#d9d9d9",
-    "text_color": "#222222", "accent_text_color": "#1c93e3", "section_header_text_color": "#3a95d5",
-    "subtitle_text_color": "#82868a", "destructive_text_color": "#cc2929", "hint_color": "#a8a8a8",
-    "link_color": "#2678b6", "button_color": "#50a8eb", "button_text_color": "#ffffff"
+    "bg_color": "#ffffff", "secondary_bg_color": "#f1f1f3", "header_bg_color": "#ffffff",
+    "bottom_bar_bg_color": "#f1f1f3", "section_bg_color": "#ffffff", "section_separator_color": "#d9d9d9",
+    "text_color": "#1a1d21", "accent_text_color": "#1c93e3", "section_header_text_color": "#2492d6",
+    "subtitle_text_color": "#8c8f91", "destructive_text_color": "#cc2929", "hint_color": "#a8a8a8",
+    "link_color": "#298acf", "button_color": "#229af0", "button_text_color": "#ffffff"
   }
 }

@@ -1,7 +1,10 @@
 // B2: fullscreen mode — floating system controls and the safe area guide, as one screen-sized component.
-// iOS: measured on iPhone 17 (402x874pt) from client screenshots, dark and light themes:
-//   "✕ Close" pill 76x30 and "⌄ ⋯" pill 72x30, 16pt from the edges, top edge at the system
-//   safe area (62pt). Pill colors follow the theme scheme (system/fullscreen_control_* variables).
+// iOS: Telegram-iOS FullscreenControlsComponent.swift (+ iPhone 17 screenshots for positions):
+//   pills 30pt tall, 16pt from the edges; left = 30pt icon area + "Close"/"Back" in SF Pro Rounded
+//   13 semibold; right pill 72x30 (collapse + more); pressed alpha 0.6.
+//   Colors depend on the status bar style, which follows setHeaderColor (WebAppController):
+//   by default the status bar is light → pills white(0.45) at 25% with white content;
+//   after setHeaderColor with a light color → pills white(0.7) at 35% with #808080 content.
 // Android: DRAFT by analogy. Desktop has no fullscreen controls.
 import type { Platform } from '../core';
 import { DEVICE } from './device';
@@ -53,6 +56,17 @@ export const FULLSCREEN_PLATFORMS = Object.keys(FULLSCREEN) as Platform[];
 
 export const FULLSCREEN_LEFT = ['Close', 'Back'] as const;
 export type FullscreenLeft = (typeof FULLSCREEN_LEFT)[number];
+
+/** Status bar style: Light (default) or Dark (the app set a light header color). */
+export const FULLSCREEN_STATUS = ['Light', 'Dark'] as const;
+export type FullscreenStatus = (typeof FULLSCREEN_STATUS)[number];
+
+export const PILL_COLORS: Record<FullscreenStatus, { bg: string; bgAlpha: number; fg: string }> = {
+  Light: { bg: '#737373', bgAlpha: 0.25, fg: '#ffffff' },
+  Dark: { bg: '#b3b3b3', bgAlpha: 0.35, fg: '#808080' },
+};
+
+export const FULLSCREEN_PRESSED_OPACITY = 0.6;
 
 export const FULLSCREEN_STATES = ['Default', 'Left pressed', 'Right pressed'] as const;
 export type FullscreenState = (typeof FULLSCREEN_STATES)[number];

@@ -20,6 +20,7 @@ import {
   ensureTextProperty,
   KEY_IGNORE,
   overlay,
+  rawPaint,
   removeChild,
   variantName,
   type BuildContext,
@@ -62,12 +63,17 @@ function buildButton(c: ComponentNode, ctx: BuildContext, platform: Platform, ty
   if (state === 'Loading') {
     const spinner = ensureChild(c, 'Spinner', 'ELLIPSE', () => figma.createEllipse());
     spinner.resize(spec.spinnerSize, spec.spinnerSize);
-    spinner.arcData = { startingAngle: 0, endingAngle: Math.PI * 1.5, innerRadius: 0.82 };
+    spinner.arcData = {
+      startingAngle: 0,
+      endingAngle: Math.PI * 1.5,
+      innerRadius: 1 - (2 * spec.spinnerWeight) / spec.spinnerSize,
+    };
     spinner.fills = [boundPaint(ctx, colors.fg)];
   } else removeChild(c, 'Spinner');
 
   if (state === 'Pressed') {
     // Tint with the button's own text color: lightens or darkens depending on the theme.
+    // Both clients tint with the button's text color at 15% (Android ripple, iOS highlight).
     const tint = ensureChild(c, 'Pressed', 'RECTANGLE', () => figma.createRectangle());
     overlay(tint, c);
     tint.fills = [boundPaint(ctx, colors.fg, 0.15)];
@@ -120,9 +126,11 @@ async function buildBar(
   c.itemSpacing = spec.padding.bottom;
   c.fills = [boundPaint(ctx, 'bottom_bar_bg_color')];
   if (spec.topSeparator) {
-    c.strokes = [boundPaint(ctx, 'section_separator_color')];
+    c.strokes = [
+      spec.topSeparator === 'theme' ? boundPaint(ctx, 'section_separator_color') : rawPaint('#000000', 0.1),
+    ];
     c.strokeAlign = 'INSIDE';
-    c.strokeTopWeight = 0.5;
+    c.strokeTopWeight = spec.topSeparator === 'theme' ? 0.5 : 1;
     c.strokeRightWeight = c.strokeBottomWeight = c.strokeLeftWeight = 0;
   } else c.strokes = [];
   c.description = DRAFT_NOTE;
@@ -130,7 +138,7 @@ async function buildBar(
   const row = ensureChild(c, 'Buttons', 'FRAME', () => figma.createFrame());
   row.fills = [];
   row.layoutMode = direction;
-  row.itemSpacing = spec.gap;
+  row.itemSpacing = direction === 'VERTICAL' ? spec.gapVertical : spec.gap;
   row.primaryAxisSizingMode = direction === 'VERTICAL' ? 'AUTO' : 'FIXED';
   row.counterAxisSizingMode = direction === 'VERTICAL' ? 'FIXED' : 'AUTO';
   row.layoutSizingHorizontal = 'FILL';

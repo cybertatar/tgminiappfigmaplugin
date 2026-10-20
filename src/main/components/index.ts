@@ -20,7 +20,7 @@ async function resolveFonts(): Promise<{ fonts: BuildContext['fonts']; warnings:
   const fonts = {} as BuildContext['fonts'];
   for (const p of PLATFORMS) {
     fonts[p] = {} as Record<FontWeight, FontName>;
-    for (const weight of ['regular', 'semibold'] as FontWeight[]) {
+    for (const weight of ['regular', 'semibold', 'rounded'] as FontWeight[]) {
       const candidates = PLATFORM_FONTS[p][weight];
       const font = pickFont(candidates, available);
       if (!font) {
@@ -138,7 +138,12 @@ export async function insertKit(target: FrameNode | ComponentNode, req: InsertRe
     case 'fullscreen': {
       // Desktop has no fullscreen controls: fall back to iOS.
       const fsPlatform = FULLSCREEN[platform] ? platform : 'ios';
-      const c = await variant(TAG_FULLSCREEN, { Platform: PLATFORM_LABEL[fsPlatform], Left: req.left, State: 'Default' });
+      const c = await variant(TAG_FULLSCREEN, {
+        Platform: PLATFORM_LABEL[fsPlatform],
+        Left: req.left,
+        'Status bar': 'Light',
+        State: 'Default',
+      });
       return [place(target, c, 'cover')];
     }
   }

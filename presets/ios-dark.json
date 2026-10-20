@@ -1,9 +1,9 @@
 {
-  "id": "ios-dark", "name": "iOS Dark", "platform": "ios", "scheme": "dark", "draft": true,
-  "source": "approximation from memory of the native palette — capture with sniffer/ and replace",
+  "id": "ios-dark", "name": "iOS Dark", "platform": "ios", "scheme": "dark",
+  "source": "Telegram-iOS f1dd7a2: WebAppController.swift (themeParams mapping) + TelegramPresentationData/DefaultDarkPresentationTheme.swift (default night theme, accent 0x3e88f7)",
   "params": {
-    "bg_color": "#000000", "secondary_bg_color": "#1c1c1d", "header_bg_color": "#1a1a1a",
-    "bottom_bar_bg_color": "#1d1d1d", "section_bg_color": "#2c2c2e", "section_separator_color": "#545458",
+    "bg_color": "#000000", "secondary_bg_color": "#000000", "header_bg_color": "#1a1a1a",
+    "bottom_bar_bg_color": "#1d1d1d", "section_bg_color": "#1c1c1d", "section_separator_color": "#545458",
     "text_color": "#ffffff", "accent_text_color": "#3e88f7", "section_header_text_color": "#8d8e93",
     "subtitle_text_color": "#98989e", "destructive_text_color": "#eb5545", "hint_color": "#98989e",
     "link_color": "#3e88f7", "button_color": "#3e88f7", "button_text_color": "#ffffff"

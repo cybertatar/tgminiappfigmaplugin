@@ -1,8 +1,10 @@
 // B3: geometry of the bottom bar and its Main/Secondary buttons per platform.
-// iOS: width of iPhone 17 (402pt); other values measured from the official
-// "WebViewColors explained" illustration (see /reference):
-//   button 361x50 at 16pt side insets, ~10pt radius, 16pt above the button, hairline on top.
-// Android, Desktop: DRAFT approximations, not yet checked against clients.
+// iOS: Telegram-iOS AttachmentPanel.swift, "legacy" panel style used by Mini Apps:
+//   buttons 50pt, corner radius 12, 16pt side insets, 16pt between buttons, 8pt above,
+//   semibold 17, progress diameter height-22 with 3pt line, hairline separator on top.
+// Android: Telegram Android BotButtons.java: buttons 44dp, radius 9, 8dp side insets,
+//   10dp between side-by-side buttons, 7dp above/between/below, bold 14, top separator black 10%.
+// Desktop: DRAFT approximations, not yet checked against tdesktop sources.
 // Update the numbers here — the plugin rebuilds components in place.
 import type { Platform } from '../core';
 import { DEVICE } from './device';
@@ -11,55 +13,64 @@ export interface BottomBarSpec {
   /** Bar width = typical Mini App viewport width on the platform. */
   width: number;
   padding: { top: number; right: number; bottom: number; left: number };
-  /** Space between Main and Secondary buttons. */
+  /** Space between side-by-side buttons. */
   gap: number;
+  /** Space between stacked buttons. */
+  gapVertical: number;
   buttonHeight: number;
   radius: number;
   fontSize: number;
   textCase: 'ORIGINAL' | 'UPPER';
   spinnerSize: number;
+  spinnerWeight: number;
   /** System inset below the bar (iOS home indicator, Android navigation bar). 0 = none. */
   safeAreaBottom: number;
-  /** Hairline between content and the bar. */
-  topSeparator: boolean;
+  /** Line between content and the bar: theme separator hairline (iOS), black 10% (Android), none. */
+  topSeparator: 'theme' | 'black10' | null;
 }
 
 export const BOTTOM_BAR: Record<Platform, BottomBarSpec> = {
   ios: {
     width: DEVICE.ios.width,
-    padding: { top: 16, right: 16, bottom: 8, left: 16 },
-    gap: 10,
+    padding: { top: 8, right: 16, bottom: 8, left: 16 },
+    gap: 16,
+    gapVertical: 16,
     buttonHeight: 50,
-    radius: 10,
+    radius: 12,
     fontSize: 17,
     textCase: 'ORIGINAL',
-    spinnerSize: 22,
+    spinnerSize: 28,
+    spinnerWeight: 3,
     safeAreaBottom: DEVICE.ios.safeBottom,
-    topSeparator: true,
+    topSeparator: 'theme',
   },
   android: {
     width: DEVICE.android.width,
-    padding: { top: 8, right: 12, bottom: 8, left: 12 },
-    gap: 8,
-    buttonHeight: 48,
-    radius: 10,
-    fontSize: 15,
+    padding: { top: 7, right: 8, bottom: 7, left: 8 },
+    gap: 10,
+    gapVertical: 7,
+    buttonHeight: 44,
+    radius: 9,
+    fontSize: 14,
     textCase: 'ORIGINAL',
-    spinnerSize: 20,
+    spinnerSize: 22,
+    spinnerWeight: 2.5,
     safeAreaBottom: DEVICE.android.safeBottom,
-    topSeparator: false,
+    topSeparator: 'black10',
   },
   desktop: {
     width: DEVICE.desktop.width,
     padding: { top: 10, right: 12, bottom: 10, left: 12 },
     gap: 8,
+    gapVertical: 8,
     buttonHeight: 42,
     radius: 8,
     fontSize: 14,
     textCase: 'ORIGINAL',
     spinnerSize: 18,
+    spinnerWeight: 2,
     safeAreaBottom: DEVICE.desktop.safeBottom,
-    topSeparator: false,
+    topSeparator: null,
   },
 };
 

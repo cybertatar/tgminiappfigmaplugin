@@ -14,7 +14,7 @@ const KINDS: { id: Kind; label: string; hint: string }[] = [
 ];
 
 const HEADER_COLOR_HINT: Record<HeaderColor, string> = {
-  Header: 'header_bg_color (default)',
+  Default: 'no setHeaderColor (iOS header_bg_color, Android section_bg_color)',
   Background: "setHeaderColor('bg_color')",
   Secondary: "setHeaderColor('secondary_bg_color')",
   'Custom dark': 'setHeaderColor(#hex), dark',
@@ -57,7 +57,7 @@ export function ComponentsTab({ state, report }: { state: PluginState; report: C
   const [kind, setKind] = useState<Kind>('header');
   const [layout, setLayout] = useState<BarLayout>('Main only');
   const [headerLeft, setHeaderLeft] = useState<HeaderLeft>('Close');
-  const [headerColor, setHeaderColor] = useState<HeaderColor>('Header');
+  const [headerColor, setHeaderColor] = useState<HeaderColor>('Default');
   const [fsLeft, setFsLeft] = useState<FullscreenLeft>('Close');
   const target = state.insertTarget;
 

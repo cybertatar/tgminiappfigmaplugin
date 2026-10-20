@@ -21,3 +21,16 @@ What the system components are checked against. Images are not copied here — f
 
 Put own captures here as `<platform>-<scheme>-<what>.png` (e.g. `android-light-bar-main.png`),
 with device model and Telegram version in the commit message.
+
+## Client source code (primary source)
+
+Values in `presets/` and `src/components/` are taken from the open-source Telegram clients:
+
+| What | Telegram Android ([DrKLO/Telegram](https://github.com/DrKLO/Telegram) @ 0aae959) | Telegram iOS ([TelegramMessenger/Telegram-iOS](https://github.com/TelegramMessenger/Telegram-iOS) @ f1dd7a2) |
+|---|---|---|
+| themeParams mapping | `ui/bots/BotWebViewAttachedSheet.makeThemeParams` | `submodules/WebUI/Sources/WebAppController.swift` (`webAppThemeParams`) |
+| Default theme colors | `ui/ActionBar/ThemeColors.java`, `assets/bluebubbles.attheme`, `assets/darkblue.attheme` | `TelegramPresentationData/DefaultDayPresentationTheme.swift`, `DefaultDarkPresentationTheme.swift` |
+| Bottom buttons | `ui/bots/BotButtons.java` | `submodules/AttachmentUI/Sources/AttachmentPanel.swift` (legacy style) |
+| Header | `BotWebViewAttachedSheet` (default `windowBackgroundWhite`, contrast by luminance), `ActionBar.java` | `WebAppController.updateHeaderBackgroundColor` |
+| Fullscreen controls | — | `submodules/WebUI/Sources/FullscreenControlsComponent.swift` |
+| Status bar / insets | AOSP `SystemBarUtils.getStatusBarHeight`, `NavigationBarModeGesturalOverlay` dimens | iPhone 17 screenshots |

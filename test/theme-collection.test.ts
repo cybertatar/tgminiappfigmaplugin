@@ -90,14 +90,6 @@ describe('syncCollection', () => {
     expect(bg.codeSyntax.WEB).toBe('var(--tg-theme-bg-color)');
     expect(Object.keys(bg.values)).toHaveLength(PRESETS.length);
     expect(bg.values[readModeMap(c as any)['ios-dark']]).toEqual({ r: 0, g: 0, b: 0, a: 1 });
-    const pill = variables.find((v) => v.name === 'system/fullscreen_control_bg')!;
-    expect(pill.codeSyntax.WEB).toBeUndefined();
-    expect(pill.values[readModeMap(c as any)['ios-light']]).toMatchObject({ r: 0, a: 0.14 });
-    expect(pill.values[readModeMap(c as any)['ios-dark']]).toMatchObject({ r: 1, a: 0.11 });
-    // Android Light has a blue header: dark text_color doesn't read there, so the title turns white.
-    const title = variables.find((v) => v.name === 'system/header_title')!;
-    expect(title.values[readModeMap(c as any)['android-light']]).toEqual({ r: 1, g: 1, b: 1, a: 1 });
-    expect(title.values[readModeMap(c as any)['ios-light']]).toEqual({ r: 0, g: 0, b: 0, a: 1 });
   });
 
   it('is idempotent and survives user renames', async () => {

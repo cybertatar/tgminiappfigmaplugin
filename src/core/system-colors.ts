@@ -18,7 +18,7 @@ export interface SystemColorInfo {
 const solid = (hex: string, alpha = 1): SystemColorValue => ({ hex, alpha });
 
 /**
- * `preferred` if it reads on `bg` (contrast >= min), otherwise white or black with `fallbackAlpha`.
+ * Kept for custom checks: `preferred` if it reads on `bg` (contrast >= min), otherwise white or black with `fallbackAlpha`.
  * White wins whenever it reaches 3:1: like Telegram and Material, saturated mid-tones
  * (e.g. the classic Android blue header #527da3) get white content even if black is
  * marginally higher by WCAG.
@@ -31,32 +31,11 @@ export function readableOn(bg: string, preferred: string, min: number, fallbackA
 
 const WHITE = { r: 1, g: 1, b: 1 };
 
-export const SYSTEM_COLORS = {
-  // Measured on iPhone 17 (Telegram iOS, fullscreen Mini App): pills read as #1c1c1c over black
-  // in the dark theme and #dcdcdc over white in the light theme; content is white in both.
-  fullscreen_control_bg: {
-    description: 'Fullscreen floating controls background (system UI, not a theme param)',
-    value: (_, scheme) => (scheme === 'dark' ? solid('#ffffff', 0.11) : solid('#000000', 0.14)),
-  },
-  fullscreen_control_fg: {
-    description: 'Fullscreen floating controls icons and text (system UI, not a theme param)',
-    value: () => solid('#ffffff'),
-  },
-  // Header content over header_bg_color: theme color when readable, else white/black.
-  header_title: {
-    description: 'Header title over header_bg_color: text_color, or white/black when it lacks contrast',
-    value: (p) => readableOn(p.header_bg_color, p.text_color, 4.5),
-  },
-  header_accent: {
-    description: 'Header buttons over header_bg_color: accent_text_color, or white/black when it lacks contrast',
-    value: (p) => readableOn(p.header_bg_color, p.accent_text_color, 3),
-  },
-  header_hint: {
-    description: 'Header subtitle over header_bg_color: hint_color, or translucent white/black when it lacks contrast',
-    value: (p) => readableOn(p.header_bg_color, p.hint_color, 3, 0.7),
-  },
-} satisfies Record<string, SystemColorInfo>;
+// Fullscreen pill colors depend on setHeaderColor (a component variant), and header content
+// colors follow Telegram's own rules per variant, so no theme-derived system colors are needed
+// right now. Variables removed from this list are deleted from files on the next sync.
+export const SYSTEM_COLORS: Record<string, SystemColorInfo> = {};
 
-export type SystemColorKey = keyof typeof SYSTEM_COLORS;
+export type SystemColorKey = string;
 export const SYSTEM_COLOR_KEYS = Object.keys(SYSTEM_COLORS) as SystemColorKey[];
 export const systemVariableName = (key: SystemColorKey) => `system/${key}`;
