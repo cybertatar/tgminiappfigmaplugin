@@ -5,6 +5,7 @@ import { bindGroups, bindScreenBackgrounds, clearIgnored, collect, groupOccurren
 import { PLATFORM_LABEL } from '../components/bottom-bar';
 import { buildComponents, componentsReady, insertKit, platformOf, screenOf, switchPlatform } from './components';
 import { checkContrast } from './contrast';
+import { analyzeScreen } from './handoff';
 import { buildMatrix, resolveScreens } from './matrix';
 import { applyPreset, findCollection, isThemeable, modeList, presetOf, syncCollection } from './theme-collection';
 
@@ -142,6 +143,13 @@ async function handle(msg: UiToMain) {
       const selection = figma.currentPage.selection;
       if (selection.length === 0) throw new Error('Select the screens to check.');
       post({ type: 'contrast-result', result: await checkContrast(selection, collection, PRESETS) });
+      break;
+    }
+    case 'handoff': {
+      const selection = figma.currentPage.selection;
+      const screen = selection.length === 1 ? screenOf(selection[0]) : null;
+      if (!screen) throw new Error('Select one screen frame.');
+      post({ type: 'handoff-result', result: await analyzeScreen(screen, msg.settingsButton) });
       break;
     }
     case 'select-node': {

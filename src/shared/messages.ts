@@ -101,6 +101,15 @@ export interface ContrastResult {
   skipped: { noBackground: number; unsupported: number; system: number };
 }
 
+export interface HandoffResult {
+  screenName: string;
+  /** Kit components found on the screen. */
+  found: string[];
+  snippet: string;
+  /** var(--tg-theme-*) used by bound colors on the screen. */
+  cssVars: string[];
+}
+
 export type UiToMain =
   | { type: 'ready' }
   | { type: 'connect-theme' }
@@ -118,6 +127,7 @@ export type UiToMain =
   | { type: 'build-components' }
   | { type: 'insert'; request: InsertRequest }
   | { type: 'contrast' }
+  | { type: 'handoff'; settingsButton: boolean }
   | { type: 'select-node'; nodeId: string };
 
 export type MainToUi =
@@ -126,4 +136,5 @@ export type MainToUi =
   | { type: 'scan-result'; result: ScanResult | null }
   | { type: 'components-done'; report: ComponentsReport }
   | { type: 'contrast-result'; result: ContrastResult }
+  | { type: 'handoff-result'; result: HandoffResult }
   | { type: 'error'; message: string };

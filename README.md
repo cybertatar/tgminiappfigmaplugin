@@ -24,15 +24,15 @@ Full spec: [docs/SPEC.md](docs/SPEC.md).
 | B3 Bottom bar: Main/Secondary buttons, all layouts and states | ✅ iOS from official docs, others draft |
 | B4, B5 Popups, screen template | ⏳ |
 | C1 Unbound colors: scan, suggest, bind, exceptions | ✅ |
-| C2 Contrast across themes | ⏳ |
-| D Handoff UI | ⏳ (`generateSnippet` is ready in core) |
+| C2 Contrast across themes | ✅ |
+| D Handoff: JS snippet + CSS variables from the screen | ✅ |
 
 ## Develop
 
 ```sh
 npm install
 npm run watch      # rebuilds dist/ on change
-npm test           # unit tests for src/core and the collection sync
+npm test           # unit tests (core, collection sync, audit, contrast, handoff)
 npm run typecheck
 ```
 

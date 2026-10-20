@@ -4,6 +4,7 @@ import { PRESETS, resolveParams, type Preset } from '../core';
 import type {
   ComponentsReport,
   ContrastResult,
+  HandoffResult,
   MainToUi,
   PluginState,
   ScanResult,
@@ -13,6 +14,7 @@ import { send } from './bridge';
 import { ChecksTab } from './checks';
 import { ComponentsTab } from './components-tab';
 import { ContrastView } from './contrast';
+import { HandoffTab } from './handoff';
 import './styles.css';
 
 type Tab = 'themes' | 'components' | 'checks' | 'handoff';
@@ -166,14 +168,6 @@ function MatrixCard({ state, available }: { state: PluginState; available: Set<s
   );
 }
 
-function Placeholder({ what }: { what: string }) {
-  return (
-    <div class="tab">
-      <p class="muted">{what} — coming next.</p>
-    </div>
-  );
-}
-
 function App() {
   const [tab, setTab] = useState<Tab>('themes');
   const [state, setState] = useState<PluginState | null>(null);
@@ -182,6 +176,7 @@ function App() {
   const [scan, setScan] = useState<ScanResult | null>(null);
   const [componentsReport, setComponentsReport] = useState<ComponentsReport | null>(null);
   const [contrast, setContrast] = useState<ContrastResult | null>(null);
+  const [handoff, setHandoff] = useState<HandoffResult | null>(null);
   const [check, setCheck] = useState<'colors' | 'contrast'>('colors');
 
   useEffect(() => {
@@ -195,6 +190,7 @@ function App() {
       else if (msg.type === 'scan-result') setScan(msg.result);
       else if (msg.type === 'components-done') setComponentsReport(msg.report);
       else if (msg.type === 'contrast-result') setContrast(msg.result);
+      else if (msg.type === 'handoff-result') setHandoff(msg.result);
       else if (msg.type === 'error') setError(msg.message);
     };
     send({ type: 'ready' });
@@ -242,7 +238,7 @@ function App() {
           )}
         </>
       ) : (
-        <Placeholder what="Copy for development" />
+        <HandoffTab state={state} result={handoff} />
       )}
     </div>
   );
