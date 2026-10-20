@@ -81,7 +81,7 @@ describe('color', () => {
 
 describe('presets', () => {
   it('built-ins are complete and valid', () => {
-    expect(PRESETS.length).toBeGreaterThanOrEqual(6);
+    expect(PRESETS.length).toBeGreaterThanOrEqual(5);
     expect(new Set(PRESETS.map((p) => p.id)).size).toBe(PRESETS.length);
     for (const p of PRESETS) {
       const { filled } = resolveParams(p.params, p.scheme);

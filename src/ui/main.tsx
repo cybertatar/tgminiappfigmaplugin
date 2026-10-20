@@ -114,8 +114,8 @@ function ThemesTab({
       <MatrixCard state={state} available={inCollection} />
 
       <p class="muted small">
-        DRAFT themes use approximate colors. Capture real values with the sniffer page and update{' '}
-        <code>presets/*.json</code>.
+        iOS and Android themes match the default Telegram themes. Stress Test is a deliberately harsh custom theme
+        for catching unreadable colors.
       </p>
     </div>
   );

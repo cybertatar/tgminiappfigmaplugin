@@ -1,4 +1,4 @@
-# TG Native Kit
+# Native Kit for Telegram Mini Apps
 
 Figma plugin for designing **native** Telegram Mini Apps — apps that take their colors from the user's Telegram theme.
 

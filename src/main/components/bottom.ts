@@ -11,7 +11,7 @@ import {
   type ButtonState,
   type ButtonType,
 } from '../../components/bottom-bar';
-import { PLATFORMS, type Platform, type ThemeParamKey } from '../../core';
+import { KIT_PLATFORMS, type Platform, type ThemeParamKey } from '../../core';
 import {
   boundPaint,
   ensureChild,
@@ -31,7 +31,7 @@ export const TAG_BUTTON = 'bottom-button';
 export const TAG_BAR = 'bottom-bar';
 
 const DRAFT_NOTE =
-  'iOS and Android from Telegram client sources; Desktop is DRAFT. Inactive looks like Default (only taps are ignored). Sizes: src/components/bottom-bar.ts.';
+  'iOS and Android from the Telegram client sources. Inactive looks like Default (only taps are ignored).';
 
 function buildButton(c: ComponentNode, ctx: BuildContext, platform: Platform, type: ButtonType, state: ButtonState) {
   const spec = BOTTOM_BAR[platform];
@@ -220,7 +220,7 @@ async function buildBar(
 
 export async function buildBottomComponents(page: PageNode, ctx: BuildContext): Promise<SetReport> {
   const buttonVariants = BUTTON_TYPES.flatMap((type) =>
-    PLATFORMS.flatMap((platform) =>
+    KIT_PLATFORMS.flatMap((platform) =>
       BUTTON_STATES.map((state) => ({
         props: { Type: type, Platform: PLATFORM_LABEL[platform], State: state },
         build: (c: ComponentNode) => buildButton(c, ctx, platform, type, state),
@@ -241,7 +241,7 @@ export async function buildBottomComponents(page: PageNode, ctx: BuildContext): 
     if (label) label.componentPropertyReferences = { characters: labelKey };
   }
 
-  const barVariants = PLATFORMS.flatMap((platform) =>
+  const barVariants = KIT_PLATFORMS.flatMap((platform) =>
     BAR_LAYOUTS.map((layout) => ({
       props: { Platform: PLATFORM_LABEL[platform], Layout: layout },
       build: (c: ComponentNode) => buildBar(c, ctx, platform, layout, buttons, labelKey),

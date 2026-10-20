@@ -93,8 +93,7 @@ export function ComponentsTab({ state, report }: { state: PluginState; report: C
           </div>
         )}
         <p class="muted small">
-          Colors are bound to Telegram Theme. iOS and Android follow the Telegram client source code;{' '}
-          <span class="badge">DRAFT</span> Desktop is approximate.
+          Colors are bound to Telegram Theme. Sizes and states follow the Telegram iOS and Android apps.
         </p>
       </section>
 

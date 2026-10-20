@@ -34,8 +34,8 @@ export const TAG_FULLSCREEN = 'fullscreen-controls';
 const TAG_SAFE_AREA_OLD = 'safe-area';
 
 const NOTE =
-  'iOS from Telegram-iOS FullscreenControlsComponent; Android is DRAFT. "Status bar": Light by default, ' +
-  'Dark when the app sets a light header color. Sizes: src/components/fullscreen.ts.';
+  'From the Telegram iOS app. "Status bar": Light by default, Dark when the app sets a light header color. ' +
+  'Turn on "Safe area guide" to check insets.';
 
 function pill(parent: FrameNode, name: string, spec: PillSpec, status: FullscreenStatus, pressed: boolean): FrameNode {
   const f = ensureChild(parent, name, 'FRAME', () => figma.createFrame());

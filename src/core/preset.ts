@@ -24,6 +24,11 @@ export interface Preset {
 }
 
 export const PLATFORMS: readonly Platform[] = ['ios', 'android', 'desktop'];
+/**
+ * Platforms the component kit is built for. Desktop is hidden until its geometry and colors
+ * are taken from the Telegram Desktop sources (its configs stay in src/components).
+ */
+export const KIT_PLATFORMS: readonly Platform[] = ['ios', 'android'];
 
 // Used only when a preset lacks even the base keys.
 const BASE_DEFAULTS: Record<Scheme, Partial<ResolvedThemeParams>> = {

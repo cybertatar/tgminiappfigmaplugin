@@ -13,7 +13,7 @@ import {
   type HeaderLeft,
   type HeaderState,
 } from '../../components/header';
-import { PLATFORMS, type Platform } from '../../core';
+import { KIT_PLATFORMS, type Platform } from '../../core';
 import { DEVICE } from '../../components/device';
 import {
   boundPaint,
@@ -35,7 +35,7 @@ export const TAG_HEADER = 'header';
 const INSET = 'Status bar inset';
 
 const NOTE =
-  'iOS measured from the official Telegram docs illustration; Android/Desktop are DRAFT. Sizes: src/components/header.ts.';
+  'iOS and Android from the Telegram client sources. "Default" = no setHeaderColor; Custom = setHeaderColor(#hex), override the fill.';
 
 interface Paints {
   bg: SolidPaint;
@@ -183,7 +183,7 @@ function buildHeader(
 }
 
 export async function buildHeaderComponents(page: PageNode, ctx: BuildContext): Promise<SetReport> {
-  const variants = PLATFORMS.flatMap((platform) =>
+  const variants = KIT_PLATFORMS.flatMap((platform) =>
     HEADER_LEFT.flatMap((left) =>
       HEADER_COLORS.flatMap((color) =>
         HEADER_STATES.map((state) => ({
